@@ -96,7 +96,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-white/10 shadow-lg backdrop-blur-md border border-white/20 mb-8">
             <GraduationCap className="w-14 h-14 text-gold" />
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight mb-4 text-white">CompScience University</h1>
+          <h1 className="text-4xl font-extrabold tracking-tight mb-4 text-white">MRCA University</h1>
           <p className="text-lg text-white/70 font-medium">Integrated Campus Management Portal</p>
           <div className="mt-12 space-y-4 text-sm text-white/50">
             <p className="flex items-center justify-center gap-2">
@@ -117,7 +117,7 @@ export default function LoginPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-navy shadow-modal mb-4">
               <GraduationCap className="w-9 h-9 text-gold" />
             </div>
-            <h1 className="text-3xl font-extrabold text-navy tracking-tight">CompScience</h1>
+            <h1 className="text-3xl font-extrabold text-navy tracking-tight">MRCA</h1>
           </div>
 
           {/* VIEW: LOGIN */}
@@ -341,7 +341,7 @@ export default function LoginPage() {
           
           <div className="mt-8 text-center">
             <p className="text-[11px] text-gray-400 font-medium">
-              © {new Date().getFullYear()} CompScience University. All rights reserved.
+              © {new Date().getFullYear()} MRCA University. All rights reserved.
             </p>
           </div>
         </div>

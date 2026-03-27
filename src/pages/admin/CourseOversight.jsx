@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { COURSES } from '../../data/courses';
 import { FACULTY } from '../../data/faculty';
+import { departments } from '../../data/departments';
 import { currentSemester } from '../../data/config';
 import Modal from '../../components/Modal';
 import { useShowToast } from '../../components/Layout';
@@ -19,13 +20,15 @@ const initialCourses = COURSES.map(c => ({
 }));
 
 const EMPTY_FORM = { 
-  code: '', 
+  codeNum: '', 
   name: '', 
   credits: 4, 
   semesterType: currentSemester.type, 
   year: currentSemester.year,
   facultyId: 'FAC-001', 
-  type: 'core' 
+  type: 'core',
+  departmentCode: 'CSC',
+  department: 'Computer Science'
 };
 
 export default function CourseOversight() {
@@ -78,24 +81,31 @@ export default function CourseOversight() {
 
   function openEdit(course) {
     setEditCode(course.code);
+    const codeMatch = course.code.match(/^([A-Z]{3})(\d{3})$/);
+    const numPart = codeMatch ? codeMatch[2] : course.code.replace(/[^0-9]/g, '');
+    
     setFormData({ 
-      code: course.code,
+      codeNum: numPart,
       name: course.name,
       credits: course.credits,
       semesterType: course.semesterType || currentSemester.type,
       year: course.year || currentSemester.year,
       facultyId: course.facultyId || '',
-      type: course.category || course.type || 'core'
+      type: course.category || course.type || 'core',
+      departmentCode: course.departmentCode || 'CSC',
+      department: course.department || 'Computer Science'
     });
     setModalMode('edit');
   }
 
   function handleSave() {
     const faculty = FACULTY.find(f => f.id === formData.facultyId);
+    const finalCode = `${formData.departmentCode}${formData.codeNum}`;
     
     if (modalMode === 'create') {
       const newCourse = { 
         ...formData, 
+        code: finalCode,
         category: formData.type,
         facultyName: faculty?.name || 'Unassigned', 
         enrolled: 0,
@@ -104,10 +114,10 @@ export default function CourseOversight() {
         syllabusTopics: []
       };
       setCourses(prev => [newCourse, ...prev]);
-      showToast(`Course ${formData.code} created.`, 'success');
+      showToast(`Course ${finalCode} created.`, 'success');
     } else {
-      setCourses(prev => prev.map(c => c.code === editCode ? { ...c, ...formData, category: formData.type, facultyName: faculty?.name || c.facultyName } : c));
-      showToast(`Course ${formData.code} updated.`, 'success');
+      setCourses(prev => prev.map(c => c.code === editCode ? { ...c, ...formData, code: finalCode, category: formData.type, facultyName: faculty?.name || c.facultyName } : c));
+      showToast(`Course ${finalCode} updated.`, 'success');
     }
     setModalMode(null);
   }
@@ -123,6 +133,11 @@ export default function CourseOversight() {
   }
 
   function handleField(key, val) { 
+    if (key === 'departmentCode') {
+       const dept = departments.find(d => d.code === val);
+       setFormData(d => ({ ...d, departmentCode: val, department: dept?.name || 'Unknown' }));
+       return;
+    }
     setFormData(d => ({ ...d, [key]: val })); 
   }
 
@@ -181,6 +196,7 @@ export default function CourseOversight() {
               <tr>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Course Code</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Course Name</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Department</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Credits</th>
                 <th 
                   className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center cursor-pointer hover:bg-navy-light transition-colors"
@@ -201,6 +217,11 @@ export default function CourseOversight() {
                 <tr key={c.code} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-gold/5 transition-colors border-b border-gray-100`}>
                   <td className="px-6 py-4 font-bold text-gold">{c.code}</td>
                   <td className="px-6 py-4 font-bold text-navy max-w-[200px] truncate" title={c.name}>{c.name}</td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="text-[10px] whitespace-nowrap font-bold text-gray-700 bg-gray-100/80 px-2.5 py-1 rounded-md border border-gray-200">
+                      {c.department} · {c.departmentCode}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 text-center font-semibold text-gray-600">{c.credits}</td>
                   <td className="px-6 py-4 text-center font-bold text-gray-800 bg-gray-50">{c.year}</td>
                   <td className="px-6 py-4 text-center font-medium text-navy">{c.semesterType}</td>
@@ -259,14 +280,30 @@ export default function CourseOversight() {
             </div>
           )}
           <div className="grid grid-cols-2 gap-5">
+             <div className="col-span-2 md:col-span-1 flex gap-2">
+               <div className="flex-1">
+                 <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Department</label>
+                 <select value={formData.departmentCode} onChange={e => handleField('departmentCode', e.target.value)}
+                   className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy bg-white">
+                   {departments.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
+                 </select>
+               </div>
+               <div className="w-24">
+                 <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Code</label>
+                 <input type="text" value={formData.departmentCode} disabled className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 bg-gray-50 text-gray-500 rounded-xl font-bold cursor-not-allowed text-center" />
+               </div>
+             </div>
+             
              <div className="col-span-2 md:col-span-1">
-               <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Course Code</label>
+               <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">3-Digit Course Num</label>
                <input
-                 type="text" placeholder="e.g. CS101" disabled={modalMode === 'edit'}
-                 value={formData.code} onChange={e => handleField('code', e.target.value)}
+                 type="text" placeholder="e.g. 101" disabled={modalMode === 'edit'}
+                 value={formData.codeNum} onChange={e => handleField('codeNum', e.target.value)}
                  className={`w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy transition-all ${modalMode === 'edit' ? 'bg-gray-100 opacity-70 cursor-not-allowed' : ''}`}
                />
+               <p className="text-[10px] font-bold text-navy/50 mt-1 uppercase tracking-widest bg-gray-50 px-2 py-1 rounded inline-block border border-gray-100">Live Preview: {formData.departmentCode}{formData.codeNum || '___'}</p>
              </div>
+             
              <div className="col-span-2 md:col-span-1">
                <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Course Name</label>
                <input

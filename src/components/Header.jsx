@@ -30,7 +30,7 @@ export default function Header() {
       {/* Left: University info */}
       <div>
         <h1 className="text-base font-bold text-navy leading-none">
-          CompScience University
+          MRCA University
         </h1>
         <p className="text-xs text-gray-400 mt-0.5">Integrated Campus Portal</p>
       </div>

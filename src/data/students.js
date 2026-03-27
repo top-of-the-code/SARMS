@@ -20,25 +20,25 @@ export const STUDENTS = [
       {
         semester: 1, sgpa: 9.1,
         courses: [
-          { code: 'CS101', name: 'Mathematics I',           credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS102', name: 'Programming Fundamentals', credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS103', name: 'Digital Logic Design',    credits: 3, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC101', name: 'Mathematics I',           credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC102', name: 'Programming Fundamentals', credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC103', name: 'Digital Logic Design',    credits: 3, grade: 'A+', gradePoints: 10 },
         ],
       },
       {
         semester: 2, sgpa: 8.6,
         courses: [
-          { code: 'CS201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9 },
-          { code: 'CS202', name: 'Mathematics II',              credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS203', name: 'Object-Oriented Programming', credits: 3, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC202', name: 'Mathematics II',              credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC203', name: 'Object-Oriented Programming', credits: 3, grade: 'A+', gradePoints: 10 },
         ],
       },
       {
         semester: 3, sgpa: 8.9,
         courses: [
-          { code: 'CS301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS303', name: 'Computer Networks',               credits: 3, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC303', name: 'Computer Networks',               credits: 3, grade: 'A',  gradePoints: 9  },
         ],
       },
     ],
@@ -60,25 +60,25 @@ export const STUDENTS = [
       {
         semester: 1, sgpa: 9.5,
         courses: [
-          { code: 'CS101', name: 'Mathematics I',           credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS102', name: 'Programming Fundamentals', credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS103', name: 'Digital Logic Design',    credits: 3, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC101', name: 'Mathematics I',           credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC102', name: 'Programming Fundamentals', credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC103', name: 'Digital Logic Design',    credits: 3, grade: 'A',  gradePoints: 9  },
         ],
       },
       {
         semester: 2, sgpa: 9.2,
         courses: [
-          { code: 'CS201', name: 'Data Structures',             credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS202', name: 'Mathematics II',              credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS203', name: 'Object-Oriented Programming', credits: 3, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC201', name: 'Data Structures',             credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC202', name: 'Mathematics II',              credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC203', name: 'Object-Oriented Programming', credits: 3, grade: 'A+', gradePoints: 10 },
         ],
       },
       {
         semester: 3, sgpa: 9.0,
         courses: [
-          { code: 'CS301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS303', name: 'Computer Networks',               credits: 3, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC303', name: 'Computer Networks',               credits: 3, grade: 'A',  gradePoints: 9  },
         ],
       },
     ],
@@ -100,25 +100,25 @@ export const STUDENTS = [
       {
         semester: 1, sgpa: 7.8,
         courses: [
-          { code: 'CS101', name: 'Mathematics I',           credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS102', name: 'Programming Fundamentals', credits: 4, grade: 'A',  gradePoints: 9 },
-          { code: 'CS103', name: 'Digital Logic Design',    credits: 3, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC101', name: 'Mathematics I',           credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC102', name: 'Programming Fundamentals', credits: 4, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC103', name: 'Digital Logic Design',    credits: 3, grade: 'B',  gradePoints: 7 },
         ],
       },
       {
         semester: 2, sgpa: 8.0,
         courses: [
-          { code: 'CS201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9 },
-          { code: 'CS202', name: 'Mathematics II',              credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC202', name: 'Mathematics II',              credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8 },
         ],
       },
       {
         semester: 3, sgpa: 8.2,
         courses: [
-          { code: 'CS301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9 },
-          { code: 'CS302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS303', name: 'Computer Networks',               credits: 3, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC303', name: 'Computer Networks',               credits: 3, grade: 'B+', gradePoints: 8 },
         ],
       },
     ],
@@ -140,25 +140,25 @@ export const STUDENTS = [
       {
         semester: 1, sgpa: 8.8,
         courses: [
-          { code: 'CS101', name: 'Mathematics I',           credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS102', name: 'Programming Fundamentals', credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS103', name: 'Digital Logic Design',    credits: 3, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC101', name: 'Mathematics I',           credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC102', name: 'Programming Fundamentals', credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC103', name: 'Digital Logic Design',    credits: 3, grade: 'A',  gradePoints: 9  },
         ],
       },
       {
         semester: 2, sgpa: 8.5,
         courses: [
-          { code: 'CS201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9 },
-          { code: 'CS202', name: 'Mathematics II',              credits: 4, grade: 'A',  gradePoints: 9 },
-          { code: 'CS203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC202', name: 'Mathematics II',              credits: 4, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8 },
         ],
       },
       {
         semester: 3, sgpa: 8.7,
         courses: [
-          { code: 'CS301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS303', name: 'Computer Networks',               credits: 3, grade: 'B+', gradePoints: 8  },
+          { code: 'CSC301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC303', name: 'Computer Networks',               credits: 3, grade: 'B+', gradePoints: 8  },
         ],
       },
     ],
@@ -180,25 +180,25 @@ export const STUDENTS = [
       {
         semester: 1, sgpa: 7.2,
         courses: [
-          { code: 'CS101', name: 'Mathematics I',           credits: 4, grade: 'B',  gradePoints: 7 },
-          { code: 'CS102', name: 'Programming Fundamentals', credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS103', name: 'Digital Logic Design',    credits: 3, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC101', name: 'Mathematics I',           credits: 4, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC102', name: 'Programming Fundamentals', credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC103', name: 'Digital Logic Design',    credits: 3, grade: 'B',  gradePoints: 7 },
         ],
       },
       {
         semester: 2, sgpa: 7.5,
         courses: [
-          { code: 'CS201', name: 'Data Structures',             credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS202', name: 'Mathematics II',              credits: 4, grade: 'B',  gradePoints: 7 },
-          { code: 'CS203', name: 'Object-Oriented Programming', credits: 3, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC201', name: 'Data Structures',             credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC202', name: 'Mathematics II',              credits: 4, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC203', name: 'Object-Oriented Programming', credits: 3, grade: 'B',  gradePoints: 7 },
         ],
       },
       {
         semester: 3, sgpa: 7.8,
         courses: [
-          { code: 'CS301', name: 'Operating Systems',               credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'B',  gradePoints: 7 },
-          { code: 'CS303', name: 'Computer Networks',               credits: 3, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC301', name: 'Operating Systems',               credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC303', name: 'Computer Networks',               credits: 3, grade: 'B+', gradePoints: 8 },
         ],
       },
     ],
@@ -220,25 +220,25 @@ export const STUDENTS = [
       {
         semester: 1, sgpa: 8.3,
         courses: [
-          { code: 'CS101', name: 'Mathematics I',           credits: 4, grade: 'A',  gradePoints: 9 },
-          { code: 'CS102', name: 'Programming Fundamentals', credits: 4, grade: 'A',  gradePoints: 9 },
-          { code: 'CS103', name: 'Digital Logic Design',    credits: 3, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC101', name: 'Mathematics I',           credits: 4, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC102', name: 'Programming Fundamentals', credits: 4, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC103', name: 'Digital Logic Design',    credits: 3, grade: 'B+', gradePoints: 8 },
         ],
       },
       {
         semester: 2, sgpa: 8.0,
         courses: [
-          { code: 'CS201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9 },
-          { code: 'CS202', name: 'Mathematics II',              credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC202', name: 'Mathematics II',              credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8 },
         ],
       },
       {
         semester: 3, sgpa: 8.4,
         courses: [
-          { code: 'CS301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS303', name: 'Computer Networks',               credits: 3, grade: 'B+', gradePoints: 8  },
+          { code: 'CSC301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC303', name: 'Computer Networks',               credits: 3, grade: 'B+', gradePoints: 8  },
         ],
       },
     ],
@@ -260,25 +260,25 @@ export const STUDENTS = [
       {
         semester: 1, sgpa: 6.8,
         courses: [
-          { code: 'CS101', name: 'Mathematics I',           credits: 4, grade: 'C',  gradePoints: 6 },
-          { code: 'CS102', name: 'Programming Fundamentals', credits: 4, grade: 'B',  gradePoints: 7 },
-          { code: 'CS103', name: 'Digital Logic Design',    credits: 3, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC101', name: 'Mathematics I',           credits: 4, grade: 'C',  gradePoints: 6 },
+          { code: 'CSC102', name: 'Programming Fundamentals', credits: 4, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC103', name: 'Digital Logic Design',    credits: 3, grade: 'B',  gradePoints: 7 },
         ],
       },
       {
         semester: 2, sgpa: 7.1,
         courses: [
-          { code: 'CS201', name: 'Data Structures',             credits: 4, grade: 'B',  gradePoints: 7 },
-          { code: 'CS202', name: 'Mathematics II',              credits: 4, grade: 'C',  gradePoints: 6 },
-          { code: 'CS203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC201', name: 'Data Structures',             credits: 4, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC202', name: 'Mathematics II',              credits: 4, grade: 'C',  gradePoints: 6 },
+          { code: 'CSC203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8 },
         ],
       },
       {
         semester: 3, sgpa: 7.3,
         courses: [
-          { code: 'CS301', name: 'Operating Systems',               credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'B',  gradePoints: 7 },
-          { code: 'CS303', name: 'Computer Networks',               credits: 3, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC301', name: 'Operating Systems',               credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC303', name: 'Computer Networks',               credits: 3, grade: 'B',  gradePoints: 7 },
         ],
       },
     ],
@@ -300,25 +300,25 @@ export const STUDENTS = [
       {
         semester: 1, sgpa: 9.3,
         courses: [
-          { code: 'CS101', name: 'Mathematics I',           credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS102', name: 'Programming Fundamentals', credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS103', name: 'Digital Logic Design',    credits: 3, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC101', name: 'Mathematics I',           credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC102', name: 'Programming Fundamentals', credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC103', name: 'Digital Logic Design',    credits: 3, grade: 'A',  gradePoints: 9  },
         ],
       },
       {
         semester: 2, sgpa: 9.1,
         courses: [
-          { code: 'CS201', name: 'Data Structures',             credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS202', name: 'Mathematics II',              credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS203', name: 'Object-Oriented Programming', credits: 3, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC201', name: 'Data Structures',             credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC202', name: 'Mathematics II',              credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC203', name: 'Object-Oriented Programming', credits: 3, grade: 'A',  gradePoints: 9  },
         ],
       },
       {
         semester: 3, sgpa: 8.8,
         courses: [
-          { code: 'CS301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS303', name: 'Computer Networks',               credits: 3, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC303', name: 'Computer Networks',               credits: 3, grade: 'A',  gradePoints: 9  },
         ],
       },
     ],
@@ -340,25 +340,25 @@ export const STUDENTS = [
       {
         semester: 1, sgpa: 7.5,
         courses: [
-          { code: 'CS101', name: 'Mathematics I',           credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS102', name: 'Programming Fundamentals', credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS103', name: 'Digital Logic Design',    credits: 3, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC101', name: 'Mathematics I',           credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC102', name: 'Programming Fundamentals', credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC103', name: 'Digital Logic Design',    credits: 3, grade: 'B',  gradePoints: 7 },
         ],
       },
       {
         semester: 2, sgpa: 7.9,
         courses: [
-          { code: 'CS201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9 },
-          { code: 'CS202', name: 'Mathematics II',              credits: 4, grade: 'B',  gradePoints: 7 },
-          { code: 'CS203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC202', name: 'Mathematics II',              credits: 4, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8 },
         ],
       },
       {
         semester: 3, sgpa: 8.1,
         courses: [
-          { code: 'CS301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9 },
-          { code: 'CS302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS303', name: 'Computer Networks',               credits: 3, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC303', name: 'Computer Networks',               credits: 3, grade: 'B+', gradePoints: 8 },
         ],
       },
     ],
@@ -380,25 +380,25 @@ export const STUDENTS = [
       {
         semester: 1, sgpa: 8.1,
         courses: [
-          { code: 'CS101', name: 'Mathematics I',           credits: 4, grade: 'A',  gradePoints: 9 },
-          { code: 'CS102', name: 'Programming Fundamentals', credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS103', name: 'Digital Logic Design',    credits: 3, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC101', name: 'Mathematics I',           credits: 4, grade: 'A',  gradePoints: 9 },
+          { code: 'CSC102', name: 'Programming Fundamentals', credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC103', name: 'Digital Logic Design',    credits: 3, grade: 'A',  gradePoints: 9 },
         ],
       },
       {
         semester: 2, sgpa: 8.3,
         courses: [
-          { code: 'CS201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS202', name: 'Mathematics II',              credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8  },
+          { code: 'CSC201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC202', name: 'Mathematics II',              credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8  },
         ],
       },
       {
         semester: 3, sgpa: 8.5,
         courses: [
-          { code: 'CS301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS303', name: 'Computer Networks',               credits: 3, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC303', name: 'Computer Networks',               credits: 3, grade: 'A+', gradePoints: 10 },
         ],
       },
     ],
@@ -420,25 +420,25 @@ export const STUDENTS = [
       {
         semester: 1, sgpa: 8.9,
         courses: [
-          { code: 'CS101', name: 'Mathematics I',           credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS102', name: 'Programming Fundamentals', credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS103', name: 'Digital Logic Design',    credits: 3, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC101', name: 'Mathematics I',           credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC102', name: 'Programming Fundamentals', credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC103', name: 'Digital Logic Design',    credits: 3, grade: 'A',  gradePoints: 9  },
         ],
       },
       {
         semester: 2, sgpa: 8.6,
         courses: [
-          { code: 'CS201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS202', name: 'Mathematics II',              credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8  },
+          { code: 'CSC201', name: 'Data Structures',             credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC202', name: 'Mathematics II',              credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC203', name: 'Object-Oriented Programming', credits: 3, grade: 'B+', gradePoints: 8  },
         ],
       },
       {
         semester: 3, sgpa: 9.0,
         courses: [
-          { code: 'CS301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
-          { code: 'CS302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A+', gradePoints: 10 },
-          { code: 'CS303', name: 'Computer Networks',               credits: 3, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC301', name: 'Operating Systems',               credits: 4, grade: 'A',  gradePoints: 9  },
+          { code: 'CSC302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'A+', gradePoints: 10 },
+          { code: 'CSC303', name: 'Computer Networks',               credits: 3, grade: 'A',  gradePoints: 9  },
         ],
       },
     ],
@@ -460,25 +460,25 @@ export const STUDENTS = [
       {
         semester: 1, sgpa: 7.0,
         courses: [
-          { code: 'CS101', name: 'Mathematics I',           credits: 4, grade: 'B',  gradePoints: 7 },
-          { code: 'CS102', name: 'Programming Fundamentals', credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS103', name: 'Digital Logic Design',    credits: 3, grade: 'C',  gradePoints: 6 },
+          { code: 'CSC101', name: 'Mathematics I',           credits: 4, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC102', name: 'Programming Fundamentals', credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC103', name: 'Digital Logic Design',    credits: 3, grade: 'C',  gradePoints: 6 },
         ],
       },
       {
         semester: 2, sgpa: 7.3,
         courses: [
-          { code: 'CS201', name: 'Data Structures',             credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS202', name: 'Mathematics II',              credits: 4, grade: 'C',  gradePoints: 6 },
-          { code: 'CS203', name: 'Object-Oriented Programming', credits: 3, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC201', name: 'Data Structures',             credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC202', name: 'Mathematics II',              credits: 4, grade: 'C',  gradePoints: 6 },
+          { code: 'CSC203', name: 'Object-Oriented Programming', credits: 3, grade: 'B',  gradePoints: 7 },
         ],
       },
       {
         semester: 3, sgpa: 7.6,
         courses: [
-          { code: 'CS301', name: 'Operating Systems',               credits: 4, grade: 'B+', gradePoints: 8 },
-          { code: 'CS302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'B',  gradePoints: 7 },
-          { code: 'CS303', name: 'Computer Networks',               credits: 3, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC301', name: 'Operating Systems',               credits: 4, grade: 'B+', gradePoints: 8 },
+          { code: 'CSC302', name: 'Design & Analysis of Algorithms', credits: 4, grade: 'B',  gradePoints: 7 },
+          { code: 'CSC303', name: 'Computer Networks',               credits: 3, grade: 'B+', gradePoints: 8 },
         ],
       },
     ],

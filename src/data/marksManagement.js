@@ -5,9 +5,9 @@
 // Only activeSemester:true courses are editable
 
 export const MARKS_DATA = {
-  // CS401 — taught by FAC-001 (Dr. Pooja Singh) — ACTIVE
-  'CS401': {
-    courseCode: 'CS401',
+  // CSC401 — taught by FAC-001 (Dr. Pooja Singh) — ACTIVE
+  'CSC401': {
+    courseCode: 'CSC401',
     courseName: 'Database Management Systems',
     semester: 4,
     activeSemester: true,
@@ -33,9 +33,9 @@ export const MARKS_DATA = {
     ],
   },
 
-  // CS404E — taught by FAC-001 (Dr. Pooja Singh) — ACTIVE
-  'CS404E': {
-    courseCode: 'CS404E',
+  // CSC404 — taught by FAC-001 (Dr. Pooja Singh) — ACTIVE
+  'CSC404': {
+    courseCode: 'CSC404',
     courseName: 'Web Development',
     semester: 4,
     activeSemester: true,
@@ -55,9 +55,9 @@ export const MARKS_DATA = {
     ],
   },
 
-  // CS402 — taught by FAC-002 (Prof. Ankit Sharma) — ACTIVE
-  'CS402': {
-    courseCode: 'CS402',
+  // CSC402 — taught by FAC-002 (Prof. Ankit Sharma) — ACTIVE
+  'CSC402': {
+    courseCode: 'CSC402',
     courseName: 'Software Engineering',
     semester: 4,
     activeSemester: true,
@@ -83,9 +83,9 @@ export const MARKS_DATA = {
     ],
   },
 
-  // CS403 — taught by FAC-002 — ACTIVE
-  'CS403': {
-    courseCode: 'CS403',
+  // CSC403 — taught by FAC-002 — ACTIVE
+  'CSC403': {
+    courseCode: 'CSC403',
     courseName: 'Artificial Intelligence',
     semester: 4,
     activeSemester: true,
@@ -112,8 +112,8 @@ export const MARKS_DATA = {
   },
 
   // Past semesters — read-only (activeSemester: false)
-  'CS301': {
-    courseCode: 'CS301',
+  'CSC301': {
+    courseCode: 'CSC301',
     courseName: 'Operating Systems',
     semester: 3,
     activeSemester: false,

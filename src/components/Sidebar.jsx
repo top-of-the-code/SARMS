@@ -59,7 +59,7 @@ export default function Sidebar() {
           <GraduationCap className="w-6 h-6 text-navy" />
         </div>
         <div className="leading-tight">
-          <p className="font-bold text-sm text-white leading-none">CompScience</p>
+          <p className="font-bold text-sm text-white leading-none">MRCA</p>
           <p className="text-[10px] text-gold/80 font-medium tracking-wide uppercase">University</p>
         </div>
       </div>
