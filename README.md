@@ -8,7 +8,7 @@ A complete, **frontend-only** University ERP Web Application built with **React 
 
 ```bash
 # Navigate to the project directory
-cd "path/to/antigravityWebsite"
+cd "path/to/SARMS_website"
 
 # Install dependencies
 npm install
