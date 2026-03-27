@@ -22,7 +22,7 @@ import StudentRegistration  from './pages/admin/StudentRegistration';
 import UploadResults        from './pages/admin/UploadResults';
 
 /**
- * App — top-level router.
+ * App, top-level router.
  * All authenticated portals are wrapped in Layout (sidebar + header).
  * ProtectedRoute enforces role-based access.
  */

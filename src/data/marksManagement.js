@@ -1,11 +1,11 @@
 // Marks management data for faculty
 // Each course has:
-//   - gradingComponents: array of { id, name, weight (%) } — faculty-defined, must sum to 100
+//   - gradingComponents: array of { id, name, weight (%) }, faculty-defined, must sum to 100
 //   - studentMarks: array per student with marks per component
 // Only activeSemester:true courses are editable
 
 export const MARKS_DATA = {
-  // CSC401 — taught by FAC-001 (Dr. Pooja Singh) — ACTIVE
+  // CSC401, taught by FAC-001 (Dr. Pooja Singh), ACTIVE
   'CSC401': {
     courseCode: 'CSC401',
     courseName: 'Database Management Systems',
@@ -33,7 +33,7 @@ export const MARKS_DATA = {
     ],
   },
 
-  // CSC404 — taught by FAC-001 (Dr. Pooja Singh) — ACTIVE
+  // CSC404, taught by FAC-001 (Dr. Pooja Singh), ACTIVE
   'CSC404': {
     courseCode: 'CSC404',
     courseName: 'Web Development',
@@ -55,7 +55,7 @@ export const MARKS_DATA = {
     ],
   },
 
-  // CSC402 — taught by FAC-002 (Prof. Ankit Sharma) — ACTIVE
+  // CSC402, taught by FAC-002 (Prof. Ankit Sharma), ACTIVE
   'CSC402': {
     courseCode: 'CSC402',
     courseName: 'Software Engineering',
@@ -83,7 +83,7 @@ export const MARKS_DATA = {
     ],
   },
 
-  // CSC403 — taught by FAC-002 — ACTIVE
+  // CSC403, taught by FAC-002, ACTIVE
   'CSC403': {
     courseCode: 'CSC403',
     courseName: 'Artificial Intelligence',
@@ -111,7 +111,7 @@ export const MARKS_DATA = {
     ],
   },
 
-  // Past semesters — read-only (activeSemester: false)
+  // Past semesters, read-only (activeSemester: false)
   'CSC301': {
     courseCode: 'CSC301',
     courseName: 'Operating Systems',

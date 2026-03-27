@@ -18,7 +18,7 @@ const HOURS = Array.from(
 const HOUR_HEIGHT = 64;
 
 /**
- * Student Timetable — weekly grid Mon–Sat, 8 AM–6 PM.
+ * Student Timetable, weekly grid Mon–Sat, 8 AM–6 PM.
  * Each timetable slot is absolutely positioned inside its day column.
  */
 export default function Timetable() {
@@ -125,7 +125,7 @@ export default function Timetable() {
         <div className="mt-4 p-4 bg-white rounded-2xl shadow-card border border-gray-100 animate-slide-up flex flex-wrap gap-6">
           <div>
             <p className="text-xs text-gray-400 font-medium">Course</p>
-            <p className="text-sm font-bold text-navy mt-0.5">{tooltip.courseCode} — {tooltip.courseName}</p>
+            <p className="text-sm font-bold text-navy mt-0.5">{tooltip.courseCode}, {tooltip.courseName}</p>
           </div>
           <div className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5 text-gold" />

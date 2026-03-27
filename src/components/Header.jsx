@@ -9,7 +9,7 @@ const ROLE_BADGE = {
 };
 
 /**
- * Top header bar — shows user name, role badge, and avatar with initials.
+ * Top header bar, shows user name, role badge, and avatar with initials.
  */
 export default function Header() {
   const { currentUser } = useAuth();

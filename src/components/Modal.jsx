@@ -4,12 +4,12 @@ import { X } from 'lucide-react';
 /**
  * Reusable Modal dialog with overlay.
  * Props:
- *   isOpen     — boolean
- *   onClose    — function
- *   title      — string
- *   children   — modal body content
- *   footer     — optional footer JSX (action buttons)
- *   size       — 'sm' | 'md' | 'lg' | 'xl' (default 'md')
+ *   isOpen    , boolean
+ *   onClose   , function
+ *   title     , string
+ *   children  , modal body content
+ *   footer    , optional footer JSX (action buttons)
+ *   size      , 'sm' | 'md' | 'lg' | 'xl' (default 'md')
  */
 export default function Modal({ isOpen, onClose, title, children, footer, size = 'md' }) {
   // Prevent background scroll when modal is open

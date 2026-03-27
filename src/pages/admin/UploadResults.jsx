@@ -3,12 +3,13 @@ import { COURSES } from '../../data/courses';
 import Modal from '../../components/Modal';
 import { useShowToast } from '../../components/Layout';
 import { Upload, AlertTriangle, Layers } from 'lucide-react';
+import { currentSemester } from '../../data/config';
 
 const YEAR_GROUPS = [
-  { label: 'First Year — Semester 1 & 2', value: 'First Year', semesters: [1, 2] },
-  { label: 'Second Year — Semester 3 & 4', value: 'Second Year', semesters: [3, 4] },
-  { label: 'Third Year — Semester 5 & 6', value: 'Third Year', semesters: [5, 6] },
-  { label: 'Fourth Year — Semester 7 & 8', value: 'Fourth Year', semesters: [7, 8] },
+  { label: 'First Year', value: 'First Year', semesters: [1, 2] },
+  { label: 'Second Year', value: 'Second Year', semesters: [3, 4] },
+  { label: 'Third Year', value: 'Third Year', semesters: [5, 6] },
+  { label: 'Fourth Year', value: 'Fourth Year', semesters: [7, 8] },
 ];
 
 export default function UploadResults() {
@@ -63,6 +64,9 @@ export default function UploadResults() {
         </div>
 
         <div className="mb-8">
+          <p className="text-sm font-bold text-navy bg-blue-50/50 px-5 py-4 border border-blue-100 rounded-xl mb-6 shadow-sm">
+            You are publishing results for the current semester: {currentSemester.type}, {currentSemester.year}
+          </p>
           <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
             Select Year Group
           </label>

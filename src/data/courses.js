@@ -52,7 +52,7 @@ export const COURSES = [
     facultyId: 'FAC-001', facultyName: 'Dr. Pooja Singh',
     type: 'Compulsory', category: 'core', department: 'Computer Science', departmentCode: 'CSC', enrolled: 58, status: 'Inactive',
     activeSemester: false,
-    description: 'OOP principles using Java — classes, inheritance, polymorphism.',
+    description: 'OOP principles using Java, classes, inheritance, polymorphism.',
     syllabusTopics: ['Classes & Objects', 'Inheritance', 'Polymorphism', 'Interfaces', 'Exception Handling'],
     gradedComponents: [], resultsPublished: false,
   },

@@ -58,7 +58,7 @@ function Toast({ toast, onRemove }) {
 }
 
 /**
- * ToastContainer — renders all active toasts in the bottom-right corner.
+ * ToastContainer, renders all active toasts in the bottom-right corner.
  * Place this once at the top level of your app layout.
  */
 export function ToastContainer({ toasts, removeToast }) {

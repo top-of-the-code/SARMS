@@ -46,6 +46,8 @@ const generatePDF = async (elementRef, filename) => {
   const element = elementRef.current;
   if (!element) return;
   
+  // TODO: table page break — implement with backend PDF generation
+
   // hide any UI elements not meant for PDF temporarily if needed...
   // Since we scoped the ref tightly, it shouldn't capture UI buttons.
   
@@ -146,7 +148,7 @@ export default function AcademicReport() {
                      onClick={() => handleDownloadMarksheet(sem)}
                      className="w-full text-left px-4 py-3 hover:bg-gold/10 font-bold text-navy border-b border-gray-50 last:border-0 transition-colors"
                    >
-                     Semester {sem.semester} — {getTermName(sem.semester, student.batchYear)}
+                     Semester {sem.semester}, {getTermName(sem.semester, student.batchYear)}
                    </button>
                  ))}
                </div>
@@ -196,7 +198,6 @@ export default function AcademicReport() {
         
         {/* PDF Header Section */}
         <div className="flex flex-col items-center mb-10 pb-8 border-b-2 border-navy border-opacity-20">
-           <ShieldCheck className="w-12 h-12 text-navy mb-3" />
            <h1 className="text-4xl font-black text-navy uppercase tracking-widest">{universityName}</h1>
            <p className="text-sm font-bold text-gray-400 tracking-[0.2em] mt-2 mb-8 uppercase">Official Academic Transcript</p>
            
@@ -215,8 +216,9 @@ export default function AcademicReport() {
             const termName = getTermName(sem.semester, student.batchYear);
 
             return (
-              <div key={sem.semester} className="rounded-2xl border border-gray-200 overflow-hidden shadow-sm break-inside-avoid">
-                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+              <div key={sem.semester} className="flex flex-col">
+                <div className="rounded-2xl border border-gray-200 overflow-hidden shadow-sm break-inside-avoid">
+                  <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                   <h3 className="text-sm font-black text-navy uppercase tracking-wider">
                     Semester {sem.semester} <span className="text-gray-400 mx-2">|</span> {termName}
                   </h3>
@@ -257,35 +259,28 @@ export default function AcademicReport() {
                   </div>
                 </div>
               </div>
+              
+              {/* Badges underneath the table organically */}
+              {sem.sgpa >= 8.5 && (
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-xl flex items-center justify-center gap-3 font-bold text-sm shadow-sm print:hidden mx-auto max-w-2xl mt-4 w-full">
+                  <span className="text-xl">🏅</span> Vice Chancellor's List, Semester {sem.semester}
+                </div>
+              )}
+              {sem.sgpa <= 5.0 && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 px-6 py-4 rounded-xl flex items-center justify-center gap-3 font-bold text-sm shadow-sm print:hidden mx-auto max-w-2xl mt-4 w-full">
+                  <AlertTriangle className="w-5 h-5 text-amber-500" /> ⚠️ Conditional Standing, Please meet your academic advisor (Semester {sem.semester})
+                </div>
+              )}
+              
+              </div>
             );
           })}
         </div>
 
-        {/* CGPA Summary bottom */}
         <div className="mt-12 text-center pt-8 border-t-2 border-navy border-opacity-20 break-inside-avoid w-full">
            <p className="text-xs uppercase font-extrabold tracking-widest text-gray-400 mb-2">Final Cumulative Result</p>
            <p className="text-4xl font-black text-navy tracking-tight">CGPA: {cgpa.toFixed(2)} <span className="text-xl text-gray-300">/ 10.0</span></p>
         </div>
-      </div>
-      
-      {/* On-Screen Badges (RENDERED OUTSIDE PDF REPORT_REF) */}
-      <div className="flex flex-col max-w-5xl mx-auto space-y-4 mb-16 px-4 sm:px-0">
-        {student.academicRecord.map(sem => {
-          if (sem.sgpa >= 8.5) {
-             return (
-               <div key={`badge-${sem.semester}`} className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-xl flex items-center justify-center gap-3 font-bold text-sm shadow-sm">
-                 <span className="text-xl">🏅</span> Vice Chancellor's List — Semester {sem.semester}
-               </div>
-             )
-          } else if (sem.sgpa <= 5.0) {
-             return (
-               <div key={`badge-${sem.semester}`} className="bg-amber-50 border border-amber-200 text-amber-800 px-6 py-4 rounded-xl flex items-center justify-center gap-3 font-bold text-sm shadow-sm">
-                 <AlertTriangle className="w-5 h-5 text-amber-500" /> ⚠️ Conditional Standing — Please meet your academic advisor (Semester {sem.semester})
-               </div>
-             )
-          }
-          return null;
-        })}
       </div>
 
       {/* SGPA chart (Screen only) */}
@@ -308,7 +303,7 @@ export default function AcademicReport() {
               />
               <Bar dataKey="SGPA" radius={[6, 6, 6, 6]} maxBarSize={48}>
                 {chartData.map((_, i) => (
-                  <Cell key={i} fill={i === chartData.length - 1 ? '#0A1F44' : '#e2e8f0'} />
+                  <Cell key={i} fill="#0A1F44" />
                 ))}
               </Bar>
             </BarChart>
@@ -336,7 +331,7 @@ export default function AcademicReport() {
             </div>
             <div style={{ textAlign: 'right' }}>
               <p style={{ margin: '0 0 6px 0' }}><strong style={{ color: '#6b7280', textTransform: 'uppercase' }}>Program:</strong> <span style={{ fontWeight: '800', marginLeft: '6px' }}>{student.program}</span></p>
-              <p style={{ margin: 0 }}><strong style={{ color: '#6b7280', textTransform: 'uppercase' }}>Term:</strong> <span style={{ fontWeight: '800', marginLeft: '6px' }}>Semester {selectedSemForMarksheet.semester} — {getTermName(selectedSemForMarksheet.semester, student.batchYear)}</span></p>
+              <p style={{ margin: 0 }}><strong style={{ color: '#6b7280', textTransform: 'uppercase' }}>Term:</strong> <span style={{ fontWeight: '800', marginLeft: '6px' }}>Semester {selectedSemForMarksheet.semester}, {getTermName(selectedSemForMarksheet.semester, student.batchYear)}</span></p>
             </div>
           </div>
 
@@ -376,7 +371,7 @@ export default function AcademicReport() {
                )}
                {selectedSemForMarksheet.sgpa <= 5.0 && (
                  <div style={{ border: '2px solid #f59e0b', backgroundColor: '#fffbeb', color: '#92400e', padding: '12px 16px', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px' }}>
-                   ⚠️ Conditional Standing — Please meet your academic advisor
+                   ⚠️ Conditional Standing, Please meet your academic advisor
                  </div>
                )}
              </div>
@@ -387,7 +382,7 @@ export default function AcademicReport() {
           </div>
 
           <div style={{ textAlign: 'center', borderTop: '1px solid #e2e8f0', paddingTop: '20px', color: '#94a3b8', fontSize: '12px', fontWeight: '600' }}>
-            This is a computer-generated marksheet. — {universityName}
+            This is a computer-generated marksheet., {universityName}
           </div>
         </div>
       )}

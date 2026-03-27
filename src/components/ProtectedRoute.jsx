@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 /**
- * ProtectedRoute — wraps pages that require a specific role.
+ * ProtectedRoute, wraps pages that require a specific role.
  * If not logged in → redirect to /
  * If wrong role → redirect to their own dashboard home
  */

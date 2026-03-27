@@ -115,8 +115,8 @@ export default function CourseRegistration() {
 
       {renderSection("Core Courses", <Lock className="w-4 h-4 text-navy" />, "Pre-enrolled compulsory subjects", core)}
       {renderSection("Major Electives", <BookOpen className="w-4 h-4 text-gold" />, "Department specific specialization", majorElective)}
-      {renderSection("UWE — University Wide Electives", <Globe className="w-4 h-4 text-emerald-600" />, "Cross-disciplinary subjects", uwe)}
-      {renderSection("CCC — Core Common Curriculum", <Layers className="w-4 h-4 text-purple-600" />, "Mandatory foundational skills", ccc)}
+      {renderSection("UWE (University Wide Electives)", <Globe className="w-4 h-4 text-emerald-600" />, "Cross-disciplinary subjects", uwe)}
+      {renderSection("CCC (Core Common Curriculum)", <Layers className="w-4 h-4 text-purple-600" />, "Mandatory foundational skills", ccc)}
 
       {/* Credit Limit Exceeded Modal */}
       <Modal

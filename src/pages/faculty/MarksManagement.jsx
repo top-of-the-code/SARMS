@@ -84,7 +84,7 @@ export default function MarksManagement() {
           className="appearance-none w-full px-5 py-3.5 text-sm font-bold text-navy bg-white border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-navy/20 focus:border-navy transition-all cursor-pointer"
         >
           {facultyCourses.map(c => (
-             <option key={c.code} value={c.code}>{c.code} — {c.name} {MARKS_DATA[c.code]?.activeSemester ? '' : '(Past)'}</option>
+             <option key={c.code} value={c.code}>{c.code}, {c.name} {MARKS_DATA[c.code]?.activeSemester ? '' : '(Past)'}</option>
           ))}
         </select>
         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-navy">
@@ -141,7 +141,7 @@ export default function MarksManagement() {
                           <td key={comp.id} className="text-center px-3 py-3 border-r border-gray-200 bg-white/50 relative">
                             {isLocked ? (
                               <div className="flex justify-center items-center h-full">
-                                <span className="text-gray-400 font-medium">{student.marks[comp.id] ?? '—'}</span>
+                                <span className="text-gray-400 font-medium">{student.marks[comp.id] ?? ', '}</span>
                               </div>
                             ) : (
                               <input

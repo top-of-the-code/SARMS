@@ -148,7 +148,7 @@ export default function CourseManagement() {
                 {/* Status for pending courses */}
                 {(!c.description || (c.gradedComponents && c.gradedComponents.length === 0)) && (
                    <div className="bg-red-50 text-red-700 text-xs font-bold px-3 py-2 rounded-lg border border-red-200">
-                     Pending — Awaiting Course Details
+                     Pending, Awaiting Course Details
                    </div>
                 )}
 

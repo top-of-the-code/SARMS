@@ -5,7 +5,7 @@ import { ToastContainer } from './Toast';
 import { useToast } from '../hooks/useToast';
 
 /**
- * Layout — full-height shell with sidebar + header + main content.
+ * Layout, full-height shell with sidebar + header + main content.
  * Passes showToast down via a React context (ToastContext) so any child
  * page can trigger notifications.
  */
