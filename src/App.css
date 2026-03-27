@@ -1,0 +1,3 @@
+/* App.css — intentionally minimal.
+   All styling is handled by Tailwind in index.css.
+   This file is kept to avoid import errors from older Vite/React templates. */
