@@ -19,6 +19,7 @@ import MarksManagement  from './pages/faculty/MarksManagement';
 import CourseOversight      from './pages/admin/CourseOversight';
 import StudentManagement    from './pages/admin/StudentManagement';
 import StudentRegistration  from './pages/admin/StudentRegistration';
+import UploadResults        from './pages/admin/UploadResults';
 
 /**
  * App — top-level router.
@@ -76,6 +77,7 @@ export default function App() {
             <Route path="courses"  element={<CourseOversight />} />
             <Route path="students" element={<StudentManagement />} />
             <Route path="register" element={<StudentRegistration />} />
+            <Route path="results"  element={<UploadResults />} />
           </Route>
 
           {/* ── Catch-all ─────────────────────────────────── */}

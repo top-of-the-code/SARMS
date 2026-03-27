@@ -1,16 +1,17 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { STUDENTS } from '../../data/students';
 import Modal from '../../components/Modal';
 import { useShowToast } from '../../components/Layout';
-import { Search, Edit2, Save, Filter, BookOpen } from 'lucide-react';
+import { Search, Edit2, Save, BookOpen, User, Edit3, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function StudentManagement() {
   const showToast = useShowToast();
+  // Ensure deep copy to avoid mutating original file exports
   const [students, setStudents] = useState(STUDENTS.map(s => ({
     ...s,
-    academicRecord: s.academicRecord.map(sem => ({
+    academicRecord: (s.academicRecord || []).map(sem => ({
       ...sem,
-      courses: sem.courses.map(c => ({ ...c })),
+      courses: (sem.courses || []).map(c => ({ ...c })),
     })),
   })));
 
@@ -33,23 +34,27 @@ export default function StudentManagement() {
   const [viewStudent, setViewStudent] = useState(null);
   const [profileDraft, setProfileDraft] = useState({});
 
+  // Edit Grades
+  const [editGradesRoll, setEditGradesRoll] = useState('');
+  const [editGradesSem, setEditGradesSem] = useState('');
+  const [editGradesData, setEditGradesData] = useState(null);
+  const [showGradesConfirm, setShowGradesConfirm] = useState(false);
+
   // ── TABLE 1 DATA ──
   const table1Data = useMemo(() => {
     let raw = students.map(s => {
-      const currentSem = s.academicRecord.length > 0 ? s.academicRecord.at(-1).semester : 0;
+      const currentSem = (s.academicRecord && s.academicRecord.length > 0) ? s.academicRecord[s.academicRecord.length - 1].semester : 0;
       return { ...s, currentSem };
     });
 
-    // Filters (stackable)
     if (progFilter1) raw = raw.filter(s => s.program === progFilter1);
     if (yearFilter1) raw = raw.filter(s => s.batchYear === Number(yearFilter1));
     if (semFilter1)  raw = raw.filter(s => s.currentSem === Number(semFilter1));
     if (search1) {
       const q = search1.toLowerCase();
-      raw = raw.filter(s => s.name.toLowerCase().includes(q) || s.rollNo.toLowerCase().includes(q));
+      raw = raw.filter(s => (s.name || '').toLowerCase().includes(q) || (s.rollNo || '').toLowerCase().includes(q));
     }
 
-    // Sort
     if (sortField) {
       raw = raw.sort((a, b) => {
         const valA = a[sortField];
@@ -59,7 +64,6 @@ export default function StudentManagement() {
         return 0;
       });
     }
-
     return raw;
   }, [students, search1, progFilter1, yearFilter1, semFilter1, sortField, sortDesc]);
 
@@ -67,16 +71,14 @@ export default function StudentManagement() {
   const table2Data = useMemo(() => {
     let rows = [];
     students.forEach(s => {
-      // Apply Table 2 student-level filters before flattening to save computation
       if (progFilter2 && s.program !== progFilter2) return;
       if (yearFilter2 && s.batchYear !== Number(yearFilter2)) return;
       
-      const currentSem = s.academicRecord.length > 0 ? s.academicRecord.at(-1).semester : 0;
+      const currentSem = (s.academicRecord && s.academicRecord.length > 0) ? s.academicRecord[s.academicRecord.length - 1].semester : 0;
 
-      s.academicRecord.forEach(sem => {
+      (s.academicRecord || []).forEach(sem => {
         if (currentSemOnly && sem.semester !== currentSem) return;
-        
-        sem.courses.forEach(c => {
+        (sem.courses || []).forEach(c => {
           rows.push({
             rollNo: s.rollNo,
             studentName: s.name,
@@ -84,30 +86,28 @@ export default function StudentManagement() {
             courseName: c.name,
             semesterTaken: sem.semester,
             credits: c.credits,
-            grade: c.grade
+            grade: c.grade || 'N/A'
           });
         });
       });
     });
 
-    // Sort chronologically (Semester 1 first globally, or just sort by Sem)
     rows = rows.sort((a, b) => a.semesterTaken - b.semesterTaken);
 
-    // Search
     if (search2) {
       const q = search2.toLowerCase();
       rows = rows.filter(r => 
-        r.studentName.toLowerCase().includes(q) || 
-        r.rollNo.toLowerCase().includes(q) || 
-        r.courseCode.toLowerCase().includes(q)
+        (r.studentName || '').toLowerCase().includes(q) || 
+        (r.rollNo || '').toLowerCase().includes(q) || 
+        (r.courseCode || '').toLowerCase().includes(q)
       );
     }
     return rows;
   }, [students, search2, progFilter2, yearFilter2, currentSemOnly]);
 
 
-  const programs = [...new Set(students.map(s => s.program))];
-  const years = [...new Set(students.map(s => s.batchYear))].sort();
+  const programs = [...new Set(students.map(s => s.program).filter(Boolean))];
+  const years = [...new Set(students.map(s => s.batchYear).filter(Boolean))].sort();
 
   function toggleSort(field) {
     if (sortField === field) setSortDesc(!sortDesc);
@@ -123,6 +123,62 @@ export default function StudentManagement() {
     setStudents(prev => prev.map(s => s.rollNo === viewStudent.rollNo ? { ...s, ...profileDraft } : s));
     setViewStudent(null);
     showToast(`Profile updated for ${profileDraft.name}`, 'success');
+  }
+
+  // ── Edit Grades Flow ──
+  const foundStudent = students.find(s => s.rollNo.toUpperCase() === editGradesRoll.toUpperCase().trim());
+
+  useEffect(() => {
+    if (foundStudent && editGradesSem) {
+      const semRecord = foundStudent.academicRecord.find(r => r.semester === Number(editGradesSem));
+      if (semRecord) {
+        setEditGradesData(semRecord.courses.map(c => ({...c, newGrade: c.grade || ''})));
+      } else {
+        setEditGradesData([]); // No courses in that sem
+      }
+    } else {
+      setEditGradesData(null);
+    }
+  }, [editGradesRoll, editGradesSem, foundStudent]);
+
+  function handleNewGradeChange(code, val) {
+    setEditGradesData(prev => prev.map(c => c.code === code ? {...c, newGrade: val} : c));
+  }
+
+  function confirmGradeChanges() {
+    setStudents(prev => prev.map(s => {
+      if (s.rollNo === foundStudent.rollNo) {
+        return {
+          ...s,
+          academicRecord: s.academicRecord.map(r => {
+            if (r.semester === Number(editGradesSem)) {
+              return {
+                ...r,
+                courses: r.courses.map(c => {
+                  const ed = editGradesData.find(x => x.code === c.code);
+                  if (ed && ed.newGrade) {
+                    return {...c, grade: ed.newGrade, gradePoints: getPointsForGrade(ed.newGrade)};
+                  }
+                  return c;
+                })
+              }
+            }
+            return r;
+          })
+        };
+      }
+      return s;
+    }));
+    showToast('Student grades updated successfully', 'success');
+    setEditGradesRoll('');
+    setEditGradesSem('');
+    setEditGradesData(null);
+    setShowGradesConfirm(false);
+  }
+
+  function getPointsForGrade(g) {
+    const m = { 'A+': 10, 'A': 9, 'B+': 8, 'B': 7, 'C': 6, 'D': 5, 'F': 0 };
+    return m[g] || 0;
   }
 
   return (
@@ -269,7 +325,7 @@ export default function StudentManagement() {
                     <td className="px-5 py-3.5 text-gray-800 font-medium">{row.courseName}</td>
                     <td className="px-5 py-3.5 text-center text-gray-600">{row.credits}</td>
                     <td className="px-5 py-3.5 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shadow-sm ${row.grade.includes('F') ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shadow-sm ${(row.grade || '').includes('F') ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
                         {row.grade}
                       </span>
                     </td>
@@ -281,6 +337,152 @@ export default function StudentManagement() {
           </div>
         </div>
       </section>
+
+      {/* ── Section 3: Edit Student Grades ── */}
+      <section className="bg-white rounded-2xl shadow-card border border-gray-200 p-6 md:p-8">
+        <div className="mb-6">
+          <h3 className="text-xl font-bold text-navy flex items-center gap-2">
+            <Edit3 className="w-5 h-5 text-gold" /> Edit Student Grades
+          </h3>
+          <p className="text-sm font-medium text-gray-500 mt-1">
+            Update final grades for a specific student's enrolled courses.
+          </p>
+        </div>
+
+        <div className="bg-gray-50 rounded-xl border border-gray-100 p-5 md:p-6 mb-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            
+            {/* Step 1: Roll Number */}
+            <div className="flex-1">
+              <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">
+                1. Enter Roll Number
+              </label>
+              <input 
+                type="text" 
+                value={editGradesRoll}
+                onChange={e => setEditGradesRoll(e.target.value)}
+                placeholder="e.g. CS-2022-001"
+                className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold focus:ring-4 focus:ring-gold/20 font-medium text-navy transition-all"
+              />
+              <div className="mt-2 text-sm font-semibold">
+                 {editGradesRoll && foundStudent ? (
+                    <span className="text-emerald-600 flex items-center gap-1.5"><CheckCircle className="w-4 h-4"/> Found: {foundStudent.name}</span>
+                 ) : editGradesRoll ? (
+                    <span className="text-red-500">Student not found</span>
+                 ) : (
+                    <span className="text-gray-400">Enter roll number to verify.</span>
+                 )}
+              </div>
+            </div>
+
+            {/* Step 2: Select Semester */}
+            <div className="flex-1">
+              <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">
+                2. Select Semester
+              </label>
+              <select 
+                value={editGradesSem}
+                onChange={e => setEditGradesSem(e.target.value)}
+                disabled={!foundStudent}
+                className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold focus:ring-4 focus:ring-gold/20 font-medium text-navy transition-all bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">-- Choose Semester --</option>
+                {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 3: Grades Table */}
+        {editGradesData !== null && editGradesData.length > 0 && (
+          <div className="animate-fade-in">
+            <h4 className="text-sm font-bold text-navy uppercase tracking-wide mb-3">3. Update Grades</h4>
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
+              <table className="w-full text-sm whitespace-nowrap text-left border-collapse">
+                <thead className="bg-navy/5 border-b border-gray-200">
+                  <tr>
+                    <th className="px-5 py-3 text-xs font-bold text-navy uppercase">Course Code</th>
+                    <th className="px-5 py-3 text-xs font-bold text-navy uppercase">Course Name</th>
+                    <th className="px-5 py-3 text-center text-xs font-bold text-navy uppercase">Current Grade</th>
+                    <th className="px-5 py-3 text-center text-xs font-bold text-navy uppercase">New Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {editGradesData.map(c => (
+                    <tr key={c.code} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                      <td className="px-5 py-3 font-bold text-gold">{c.code}</td>
+                      <td className="px-5 py-3 font-medium text-gray-800">{c.name}</td>
+                      <td className="px-5 py-3 text-center">
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-md font-bold text-xs">{c.grade || '--'}</span>
+                      </td>
+                      <td className="px-5 py-3 text-center">
+                        <select 
+                          value={c.newGrade || ''} 
+                          onChange={(e) => handleNewGradeChange(c.code, e.target.value)}
+                          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-bold text-navy focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
+                        >
+                          <option value="">--</option>
+                          <option value="A+">A+</option>
+                          <option value="A">A</option>
+                          <option value="B+">B+</option>
+                          <option value="B">B</option>
+                          <option value="C">C</option>
+                          <option value="D">D</option>
+                          <option value="F">F</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end">
+              <button 
+                onClick={() => setShowGradesConfirm(true)}
+                className="px-6 py-3 bg-navy text-white text-sm font-bold rounded-xl hover:bg-navy-light transition-all shadow-md focus:ring-4 focus:ring-navy/20"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        )}
+
+        {editGradesData !== null && editGradesData.length === 0 && (
+          <div className="py-8 text-center text-gray-500 font-medium bg-gray-50 border border-gray-100 rounded-xl">
+            No courses found for this student in Semester {editGradesSem}.
+          </div>
+        )}
+      </section>
+
+      {/* Confirmation Modal for Grade Changes */}
+      <Modal 
+        isOpen={showGradesConfirm} 
+        onClose={() => setShowGradesConfirm(false)}
+        title="Confirm Grade Changes"
+        footer={
+          <>
+            <button onClick={() => setShowGradesConfirm(false)} className="px-5 py-2 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
+              Cancel
+            </button>
+            <button onClick={confirmGradeChanges} className="px-5 py-2 text-sm font-bold text-white bg-navy hover:bg-navy-light rounded-xl shadow-md transition-all">
+              Confirm &amp; Update
+            </button>
+          </>
+        }
+      >
+        <div className="flex gap-4 p-2">
+          <AlertTriangle className="w-8 h-8 text-orange-500 shrink-0" />
+          <div>
+            <p className="text-sm text-gray-700 leading-relaxed font-medium mb-2">
+              Are you sure you want to edit this student's grades? This action will update their academic record permanently.
+            </p>
+            <p className="text-xs text-gray-500 font-bold">
+              Student: {foundStudent?.name} ({foundStudent?.rollNo})
+            </p>
+          </div>
+        </div>
+      </Modal>
 
       {/* Edit Personal Details Modal */}
       <Modal isOpen={!!viewStudent} onClose={() => setViewStudent(null)} title="Edit Personal Details" size="xl"

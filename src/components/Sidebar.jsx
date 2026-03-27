@@ -18,10 +18,10 @@ const NAV_LINKS = {
     { to: '/faculty/marks',         label: 'Marks Management',    Icon: Edit3 },
   ],
   admin: [
-    { to: '/admin',                 label: 'Dashboard',           Icon: LayoutDashboard },
-    { to: '/admin/courses',         label: 'Course Oversight',    Icon: BookMarked },
+    { to: '/admin/courses',         label: 'Course Management',   Icon: BookMarked },
     { to: '/admin/students',        label: 'Student Management',  Icon: Users },
     { to: '/admin/register',        label: 'Student Registration',Icon: UserPlus },
+    { to: '/admin/results',         label: 'Upload Results',      Icon: BarChart2 },
   ],
 };
 

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { COURSES } from '../../data/courses';
 import { FACULTY } from '../../data/faculty';
+import { currentSemester } from '../../data/config';
 import Modal from '../../components/Modal';
 import { useShowToast } from '../../components/Layout';
 import { Plus, Edit2, Power, Search, Filter } from 'lucide-react';
@@ -8,18 +9,23 @@ import { Plus, Edit2, Power, Search, Filter } from 'lucide-react';
 const STATUS_BADGE = {
   'Active': 'bg-emerald-100 text-emerald-700',
   'Inactive': 'bg-gray-100 text-gray-500',
-  'Pending — awaiting faculty details': 'bg-amber-100 text-amber-700'
+  'Pending': 'bg-amber-100 text-amber-700'
 };
 
-const initialCourses = COURSES.map(c => ({ ...c }));
+const initialCourses = COURSES.map(c => ({
+  ...c,
+  // Add derived Pending status if it doesn't have gradedComponents or description
+  status: c.status || ((!c.description || (c.gradedComponents && c.gradedComponents.length === 0)) ? 'Pending' : 'Active')
+}));
 
 const EMPTY_FORM = { 
   code: '', 
   name: '', 
   credits: 4, 
-  semester: 4, 
+  semesterType: currentSemester.type, 
+  year: currentSemester.year,
   facultyId: 'FAC-001', 
-  type: 'Compulsory' 
+  type: 'core' 
 };
 
 export default function CourseOversight() {
@@ -28,10 +34,11 @@ export default function CourseOversight() {
   
   // Filters
   const [search, setSearch]   = useState('');
-  const [semFilter, setSemFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   
   // Sort
-  const [sortDesc, setSortDesc] = useState(false);
+  const [sortDesc, setSortDesc] = useState(true);
 
   // Modal State
   const [modalMode, setModalMode] = useState(null); // 'create' | 'edit'
@@ -45,15 +52,23 @@ export default function CourseOversight() {
     let raw = courses.slice();
     if (search) {
       const q = search.toLowerCase();
-      raw = raw.filter(c => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || c.facultyName?.toLowerCase().includes(q));
+      raw = raw.filter(c => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || (c.facultyName && c.facultyName.toLowerCase().includes(q)));
     }
-    if (semFilter) {
-      raw = raw.filter(c => c.semester === Number(semFilter));
+    if (yearFilter) {
+      raw = raw.filter(c => c.year === Number(yearFilter));
     }
-    // Sort by semester
-    raw.sort((a,b) => sortDesc ? b.semester - a.semester : a.semester - b.semester);
+    if (typeFilter) {
+      raw = raw.filter(c => c.semesterType === typeFilter);
+    }
+    // Sort by descending year, then semester type
+    raw.sort((a,b) => {
+      if (a.year !== b.year) {
+         return sortDesc ? (b.year || 0) - (a.year || 0) : (a.year || 0) - (b.year || 0);
+      }
+      return sortDesc ? (b.semesterType || '').localeCompare(a.semesterType || '') : (a.semesterType || '').localeCompare(b.semesterType || '');
+    });
     return raw;
-  }, [courses, search, semFilter, sortDesc]);
+  }, [courses, search, yearFilter, typeFilter, sortDesc]);
 
 
   function openCreate() { 
@@ -67,9 +82,10 @@ export default function CourseOversight() {
       code: course.code,
       name: course.name,
       credits: course.credits,
-      semester: course.semester,
+      semesterType: course.semesterType || currentSemester.type,
+      year: course.year || currentSemester.year,
       facultyId: course.facultyId || '',
-      type: course.type
+      type: course.category || course.type || 'core'
     });
     setModalMode('edit');
   }
@@ -80,14 +96,17 @@ export default function CourseOversight() {
     if (modalMode === 'create') {
       const newCourse = { 
         ...formData, 
+        category: formData.type,
         facultyName: faculty?.name || 'Unassigned', 
         enrolled: 0,
-        status: 'Pending — awaiting faculty details'
+        status: 'Pending',
+        gradedComponents: [],
+        syllabusTopics: []
       };
       setCourses(prev => [newCourse, ...prev]);
       showToast(`Course ${formData.code} created.`, 'success');
     } else {
-      setCourses(prev => prev.map(c => c.code === editCode ? { ...c, ...formData, facultyName: faculty?.name || c.facultyName } : c));
+      setCourses(prev => prev.map(c => c.code === editCode ? { ...c, ...formData, category: formData.type, facultyName: faculty?.name || c.facultyName } : c));
       showToast(`Course ${formData.code} updated.`, 'success');
     }
     setModalMode(null);
@@ -96,7 +115,8 @@ export default function CourseOversight() {
   function toggleStatus(code) {
     setCourses(prev => prev.map(c => {
       if (c.code !== code) return c;
-      return { ...c, status: c.status === 'Active' ? 'Inactive' : 'Active' };
+      const newStatus = c.status === 'Active' ? 'Inactive' : 'Active';
+      return { ...c, status: newStatus };
     }));
     setConfirmToggle(null);
     showToast(`Status updated successfully.`, 'success');
@@ -105,6 +125,8 @@ export default function CourseOversight() {
   function handleField(key, val) { 
     setFormData(d => ({ ...d, [key]: val })); 
   }
+
+  const years = [...new Set(courses.map(c => c.year).filter(Boolean))].sort((a,b)=>b-a);
 
   return (
     <div>
@@ -130,11 +152,22 @@ export default function CourseOversight() {
         </div>
         <div className="relative">
           <select
-            value={semFilter} onChange={e => setSemFilter(e.target.value)}
-            className="appearance-none px-5 py-2.5 pr-10 text-sm border-2 border-gray-100 rounded-xl focus:outline-none focus:border-gold focus:ring-4 focus:ring-gold/20 transition-all font-bold text-navy bg-white min-w-[180px] cursor-pointer"
+            value={yearFilter} onChange={e => setYearFilter(e.target.value)}
+            className="appearance-none px-5 py-2.5 pr-10 text-sm border-2 border-gray-100 rounded-xl focus:outline-none focus:border-gold focus:ring-4 focus:ring-gold/20 transition-all font-bold text-navy bg-white min-w-[140px] cursor-pointer"
           >
-            <option value="">Filter by Semester...</option>
-            {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
+            <option value="">All Years</option>
+            {years.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <Filter className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        </div>
+        <div className="relative">
+          <select
+            value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
+            className="appearance-none px-5 py-2.5 pr-10 text-sm border-2 border-gray-100 rounded-xl focus:outline-none focus:border-gold focus:ring-4 focus:ring-gold/20 transition-all font-bold text-navy bg-white min-w-[170px] cursor-pointer"
+          >
+            <option value="">All Sem Types</option>
+            <option value="Spring">Spring</option>
+            <option value="Monsoon">Monsoon</option>
           </select>
           <Filter className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
         </div>
@@ -152,13 +185,13 @@ export default function CourseOversight() {
                 <th 
                   className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center cursor-pointer hover:bg-navy-light transition-colors"
                   onClick={() => setSortDesc(!sortDesc)}
-                  title="Sort by Semester"
+                  title="Sort by Year/Sem"
                 >
-                  Semester {sortDesc ? '↓' : '↑'}
+                  Year {sortDesc ? '↓' : '↑'}
                 </th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Term</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Assigned Faculty</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Enrolled</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Type</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Category</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Actions</th>
               </tr>
@@ -169,12 +202,12 @@ export default function CourseOversight() {
                   <td className="px-6 py-4 font-bold text-gold">{c.code}</td>
                   <td className="px-6 py-4 font-bold text-navy max-w-[200px] truncate" title={c.name}>{c.name}</td>
                   <td className="px-6 py-4 text-center font-semibold text-gray-600">{c.credits}</td>
-                  <td className="px-6 py-4 text-center font-bold text-gray-800 bg-gray-50">{c.semester}</td>
+                  <td className="px-6 py-4 text-center font-bold text-gray-800 bg-gray-50">{c.year}</td>
+                  <td className="px-6 py-4 text-center font-medium text-navy">{c.semesterType}</td>
                   <td className="px-6 py-4 text-gray-700 font-medium">{c.facultyName}</td>
-                  <td className="px-6 py-4 text-center font-semibold text-gray-600">{c.enrolled}</td>
                   <td className="px-6 py-4 text-center">
-                    <span className={`text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-sm ${c.type === 'Compulsory' ? 'bg-navy focus:bg-navy/80 text-white' : 'bg-blue-100 text-blue-700'}`}>
-                      {c.type}
+                    <span className={`text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full shadow-sm ${c.category === 'core' ? 'bg-navy focus:bg-navy/80 text-white' : 'bg-blue-100 text-blue-700'}`}>
+                      {c.category?.replace(/([A-Z])/g, ' $1') || c.type}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -231,7 +264,7 @@ export default function CourseOversight() {
                <input
                  type="text" placeholder="e.g. CS101" disabled={modalMode === 'edit'}
                  value={formData.code} onChange={e => handleField('code', e.target.value)}
-                 className={`w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy transition-all ${modalMode === 'edit' ? 'bg-gray-100 opacity-70' : ''}`}
+                 className={`w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy transition-all ${modalMode === 'edit' ? 'bg-gray-100 opacity-70 cursor-not-allowed' : ''}`}
                />
              </div>
              <div className="col-span-2 md:col-span-1">
@@ -250,19 +283,29 @@ export default function CourseOversight() {
              </div>
              
              <div>
-               <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Semester</label>
-               <select value={formData.semester} onChange={e => handleField('semester', Number(e.target.value))}
+               <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Year</label>
+               <input type="number" min={2020} max={2030} value={formData.year} onChange={e => handleField('year', Number(e.target.value))}
+                 className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy transition-all text-center" />
+             </div>
+             
+             <div className="col-span-2 md:col-span-1">
+               <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Semester Type</label>
+               <select value={formData.semesterType} onChange={e => handleField('semesterType', e.target.value)}
                  className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy bg-white">
-                 {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
+                 <option value="Spring">Spring</option>
+                 <option value="Monsoon">Monsoon</option>
+                 <option value="Autumn">Autumn</option>
                </select>
              </div>
              
              <div className="col-span-2 md:col-span-1">
-               <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Type</label>
+               <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Category</label>
                <select value={formData.type} onChange={e => handleField('type', e.target.value)}
                  className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy bg-white">
-                 <option>Compulsory</option>
-                 <option>Elective</option>
+                 <option value="core">Core Courses</option>
+                 <option value="majorElective">Major Elective</option>
+                 <option value="uwe">University Wide Elective (UWE)</option>
+                 <option value="ccc">Core Common Curriculum (CCC)</option>
                </select>
              </div>
              
