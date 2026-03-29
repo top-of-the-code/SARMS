@@ -17,8 +17,10 @@ export default function CourseRegistration() {
   const [confirmed, setConfirmed] = useState(false);
   const [limitAlert, setLimitAlert] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
-  
+
   const [detailCourse, setDetailCourse] = useState(null);
+
+  const [studentProgram, setStudentProgram] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -27,9 +29,10 @@ export default function CourseRegistration() {
     ])
       .then(([coursesRes, studentRes]) => {
         setCourses(coursesRes.data);
+        const student = studentRes.data;
+        setStudentProgram(student.program || '');
 
         // Check if this student already has semester 4 courses enrolled
-        const student = studentRes.data;
         const sem4Record = (student.academicRecord || []).find(r => r.semester === 4);
 
         if (sem4Record && sem4Record.courses && sem4Record.courses.length > 0) {
@@ -125,11 +128,10 @@ export default function CourseRegistration() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className={`px-5 py-2.5 rounded-xl text-sm font-bold border-2 flex items-center gap-2 ${
-            totalCredits > MAX_CREDITS
+          <div className={`px-5 py-2.5 rounded-xl text-sm font-bold border-2 flex items-center gap-2 ${totalCredits > MAX_CREDITS
               ? 'border-red-300 bg-red-50 text-red-700 shadow-sm'
               : 'border-gold bg-gold/10 text-navy shadow-sm'
-          }`}>
+            }`}>
             <span className="text-2xl">{totalCredits}</span>
             <span className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">/ {MAX_CREDITS} CR</span>
           </div>
@@ -205,14 +207,14 @@ export default function CourseRegistration() {
             </div>
           ))}
         </div>
-        
+
         <div className="flex w-full gap-3 pt-4 border-t border-gray-100">
-           <button onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-600 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
-             Review Changes
-           </button>
-           <button onClick={handleFinalize} disabled={enrolling} className="flex-1 px-4 py-2.5 bg-navy text-white text-sm font-extrabold rounded-xl hover:bg-navy-light transition-all shadow-md focus:ring-4 focus:ring-navy/20 disabled:opacity-50">
-             {enrolling ? 'Enrolling…' : 'Confirm & Register'}
-           </button>
+          <button onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-600 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
+            Review Changes
+          </button>
+          <button onClick={handleFinalize} disabled={enrolling} className="flex-1 px-4 py-2.5 bg-navy text-white text-sm font-extrabold rounded-xl hover:bg-navy-light transition-all shadow-md focus:ring-4 focus:ring-navy/20 disabled:opacity-50">
+            {enrolling ? 'Enrolling…' : 'Confirm & Register'}
+          </button>
         </div>
       </Modal>
 
@@ -236,9 +238,9 @@ export default function CourseRegistration() {
                     {detailCourse.category}
                   </span>
                   {detailCourse.category === 'uwe' && detailCourse.department && (
-                     <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100">
-                       Dept: {detailCourse.department}
-                     </span>
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100">
+                      Dept: {detailCourse.department}
+                    </span>
                   )}
                 </div>
               </div>
@@ -250,32 +252,32 @@ export default function CourseRegistration() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                 <h4 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><FileText className="w-4 h-4"/> Syllabus Topics</h4>
-                 <ul className="space-y-2">
-                   {detailCourse.syllabusTopics?.map((topic, i) => (
-                     <li key={i} className="text-sm font-medium text-navy flex items-start gap-2">
-                       <span className="w-1.5 h-1.5 rounded-full bg-gold mt-1.5 shrink-0"></span> {topic}
-                     </li>
-                   ))}
-                 </ul>
+                <h4 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><FileText className="w-4 h-4" /> Syllabus Topics</h4>
+                <ul className="space-y-2">
+                  {detailCourse.syllabusTopics?.map((topic, i) => (
+                    <li key={i} className="text-sm font-medium text-navy flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gold mt-1.5 shrink-0"></span> {topic}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              
+
               <div className="space-y-6">
-                 <div>
-                   <h4 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><User className="w-4 h-4"/> Assigned Faculty</h4>
-                   <p className="text-sm font-bold text-navy bg-white border border-gray-200 px-3 py-2 rounded-lg inline-block">{detailCourse.facultyName}</p>
-                 </div>
-                 
-                 <div>
-                   <h4 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Clock className="w-4 h-4"/> Schedule</h4>
-                   <p className="text-sm font-medium text-gray-700 bg-blue-50/50 border border-blue-100 px-3 py-2 rounded-lg">{detailCourse.schedule || 'Lecture: Mon 9:00 - 11:00 am'}</p>
-                 </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><User className="w-4 h-4" /> Assigned Faculty</h4>
+                  <p className="text-sm font-bold text-navy bg-white border border-gray-200 px-3 py-2 rounded-lg inline-block">{detailCourse.facultyName}</p>
+                </div>
+
+                <div>
+                  <h4 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Clock className="w-4 h-4" /> Schedule</h4>
+                  <p className="text-sm font-medium text-gray-700 bg-blue-50/50 border border-blue-100 px-3 py-2 rounded-lg">{detailCourse.schedule || 'Lecture: Mon 9:00 - 11:00 am'}</p>
+                </div>
               </div>
             </div>
 
             {detailCourse.gradedComponents && detailCourse.gradedComponents.length > 0 && (
               <div>
-                <h4 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Info className="w-4 h-4"/> Grading Breakdown</h4>
+                <h4 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Info className="w-4 h-4" /> Grading Breakdown</h4>
                 <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 border-b border-gray-200">
@@ -299,22 +301,21 @@ export default function CourseRegistration() {
 
             <div className="pt-6 border-t border-gray-100 flex justify-end gap-3 mt-4">
               <button onClick={() => setDetailCourse(null)} className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-all">Close</button>
-              
+
               {detailCourse.category !== 'core' && (
                 <button
                   onClick={() => {
                     toggle(detailCourse.code, detailCourse.credits);
                     if (!limitAlert) setDetailCourse(null);
                   }}
-                  className={`px-6 py-2.5 text-sm font-extrabold rounded-xl transition-all shadow-md focus:ring-4 flex items-center gap-2 ${
-                    selected.includes(detailCourse.code)
+                  className={`px-6 py-2.5 text-sm font-extrabold rounded-xl transition-all shadow-md focus:ring-4 flex items-center gap-2 ${selected.includes(detailCourse.code)
                       ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 focus:ring-red-500/20'
                       : 'bg-navy text-white hover:bg-navy-light focus:ring-navy/20'
-                  }`}
+                    }`}
                 >
                   {selected.includes(detailCourse.code) ? <><Minus className="w-4 h-4" /> Drop Course</> : <><Plus className="w-4 h-4" /> Enroll Course</>}
                 </button>
-               )}
+              )}
             </div>
           </div>
         </Modal>
@@ -326,11 +327,10 @@ export default function CourseRegistration() {
 
 function CourseCard({ course, isSelected, isLocked, onToggle, onOpenDetails }) {
   return (
-    <div 
+    <div
       onClick={onOpenDetails}
-      className={`bg-white rounded-2xl border-2 p-5 flex flex-col justify-between transition-smooth cursor-pointer group ${
-      isSelected ? 'border-navy shadow-card' : 'border-gray-200 hover:border-gold/50 shadow-sm'
-    }`}>
+      className={`bg-white rounded-2xl border-2 p-5 flex flex-col justify-between transition-smooth cursor-pointer group ${isSelected ? 'border-navy shadow-card' : 'border-gray-200 hover:border-gold/50 shadow-sm'
+        }`}>
       <div>
         <div className="flex justify-between items-start mb-3">
           <span className="text-xs font-extrabold text-gold bg-gold/10 px-2.5 py-1 rounded-md border border-gold/20">{course.code}</span>
@@ -340,16 +340,15 @@ function CourseCard({ course, isSelected, isLocked, onToggle, onOpenDetails }) {
                 Dept: {course.departmentCode || course.department}
               </span>
             )}
-            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-              course.category === 'core' ? 'bg-navy/10 text-navy' : 'bg-amber-100 text-amber-700'
-            }`}>
+            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${course.category === 'core' ? 'bg-navy/10 text-navy' : 'bg-amber-100 text-amber-700'
+              }`}>
               {course.category.replace(/([A-Z])/g, ' $1').trim()}
             </span>
           </div>
         </div>
-        
+
         <p className="text-[15px] leading-snug font-extrabold text-navy mb-2 group-hover:text-gold transition-colors">{course.name}</p>
-        
+
         <div className="space-y-1.5 mb-5 mt-4">
           <p className="flex items-center gap-2 text-[11px] font-medium text-gray-500">
             <User className="w-3.5 h-3.5 text-gray-400" /> {course.facultyName}
@@ -359,7 +358,7 @@ function CourseCard({ course, isSelected, isLocked, onToggle, onOpenDetails }) {
           </p>
         </div>
       </div>
-      
+
       <div className="pt-4 border-t border-gray-100 flex items-center justify-between print:hidden">
         <button className="text-[11px] font-extrabold text-navy hover:text-gold transition-colors uppercase tracking-widest">
           View Details →
@@ -371,11 +370,10 @@ function CourseCard({ course, isSelected, isLocked, onToggle, onOpenDetails }) {
         ) : (
           <button
             onClick={onToggle}
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-extrabold transition-smooth shadow-sm ${
-              isSelected
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-extrabold transition-smooth shadow-sm ${isSelected
                 ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
                 : 'bg-navy text-white hover:bg-navy-light'
-            }`}
+              }`}
           >
             {isSelected ? <><Minus className="w-3.5 h-3.5" /> Drop</> : <><Plus className="w-3.5 h-3.5" /> Add</>}
           </button>

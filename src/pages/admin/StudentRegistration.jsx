@@ -5,13 +5,14 @@ import { CheckCircle, Copy, UserPlus, FileText, KeyRound } from 'lucide-react';
 
 const EMPTY_FORM = {
   fullName: '', fatherName: '', motherName: '', guardianPhone: '',
-  personalPhone: '', address: '', dob: '', program: 'B.Tech Computer Science', batchYear: new Date().getFullYear(),
+  personalPhone: '', address: '', dob: '', program: 'BTech - CSE', batchYear: new Date().getFullYear(),
 };
 
 const PROGRAMS = [
-  'B.Tech CSE',
-  'B.Tech IT',
-  'MCA'
+  'BTech - CSE',
+  'BTech - ECE',
+  'BTech - ME',
+  'BTech - CE'
 ];
 
 export default function StudentRegistration() {

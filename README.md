@@ -34,13 +34,13 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 The application is secured with **JWT (JSON Web Tokens)**. When the backend first boots, it seeds the database with realistic demo accounts.
 
-| Role     | Example ID         | Password |
-|----------|--------------------|----------|
-| Student  | STUD-2022-001      | pass001  |
-| Faculty  | FAC-001            | fac001   |
-| Admin    | ADM-001            | adm001   |
+| Role     | Example ID          | Password |
+|----------|---------------------|----------|
+| Student  | STUD-2026-001       | pass001  |
+| Faculty  | FAC-CSE-001         | fac001   |
+| Admin    | ADM-001             | adm001   |
 
-> The authentication system includes secure password hashing, role-based database queries, and a fully functional route-guard system on the React router.
+> The authentication system includes secure password hashing, role-based database queries, and a fully functional route-guard system on the React router. For critical operations (like bulk result publishing), the system requires **Double Authentication** where the admin must re-verify their credentials.
 
 ---
 
@@ -51,11 +51,11 @@ SARMS/
 ├── server/                   # Spring Boot Backend
 │   ├── src/main/java/.../sarms/
 │   │   ├── config/           # Security & CORS Config
-│   │   ├── controller/       # REST API Endpoints
+│   │   ├── controller/       # REST API Endpoints (inc. AdminController for bulk ops)
 │   │   ├── model/            # MongoDB Document Entities (Student, Course, Marks, User)
 │   │   ├── repository/       # MongoRepositories
 │   │   ├── security/         # JWT Generation & Filter logic
-│   │   ├── service/          # Business Logic (Grading, Enrollment, Profile management)
+│   │   ├── service/          # Business Logic (Grading, Enrollment, Promotion)
 │   │   └── seed/             # Database initialization (DataSeeder)
 │   └── src/main/resources/
 │       └── application.properties # MongoDB URI, Port, JWT Secret
@@ -64,7 +64,7 @@ SARMS/
 │   ├── components/           # Reusable UI elements (Layout, Sidebar, Modal)
 │   ├── context/              # AuthContext (Handles JWT interceptors)
 │   ├── pages/
-│   │   ├── admin/            # Course/Student Management, Uploading Results
+│   │   ├── admin/            # Course/Student Management, Bulk Result Upload
 │   │   ├── faculty/          # Marks Entry, Course Syllabus Editor
 │   │   └── student/          # Registration, Academic Report, Timetable
 │   └── services/
@@ -76,19 +76,21 @@ SARMS/
 
 ## 🧩 Key System Features
 
-### Student Course Enrollment
-Students dynamically enroll in courses for the active semester. The backend algorithm guarantees database atomicity: adding the course to their `AcademicRecord` (as "In Progress"), creating empty gradebooks inside the `Marks` collection, and incrementing the course occupancy tracker concurrently.
+### Student Registration & Auto-Enrollment
+When a new student is registered, they are assigned to one of the 4 core BTech departments (**CSE, ECE, ME, CE**). By default, their `currentSemester` is set to **1**, and the system automatically enrolls them into the **Semester 1 Core Courses** corresponding to their department. The backend generates a sequential roll number (e.g., `STUD-2026-001`) and a temporary secure password.
+
+### Bulk Result Upload & Promotion
+The Admin Dashboard features a specialized **Upload Results** engine. This process is protected by **Double Authentication**, requiring a fresh credential check before execution. Once authorized, the backend orchestrator:
+1. **Finalizes Grades**: Locks all "In Progress" courses for every student's active semester and computes final letter grades (A+, A, B, etc.) and SGPA.
+2. **Promotes Students**: Increments the `currentSemester` for all non-graduating students.
+3. **Auto-Enrollment**: Automatically enrolls promoted students into all core courses for their **new semester** based on their department.
+4. **Graduation Flow**: Students completed semester 8 are automatically flagged as graduated.
 
 ### Mathematics & Grade Publishing
-Faculty define custom assessment components (Midsem, Quizzes, Assignments). The frontend manages raw inputs against dynamically scaled dynamic component limits.
-When the Admin clicks **Publish Results**, a backend orchestrator triggers:
-1. Locks the Course and Marks Document so faculty can no longer edit grades.
-2. Extracts raw marks and mathematically scales them exactly to 100%.
-3. Maps final percentages into Letter Grades (A+, A, B) and calculates standard Grade Points (10, 9, 8).
-4. Replaces the temporary "IP" placeholders in the Student's `AcademicRecord` and permanently recomputes their SGPA.
+Faculty define custom assessment components (Midsem, Quizzes, Assignments). The system mathematically scales raw marks to 100% and maps them to standard grade points (10, 9, 8 etc.) based on predefined thresholds.
 
 ### Timetable & Dashboards
-A completely dynamic grid-based GUI timetable displays lectures corresponding precisely to the logged-in user. Dashboards use `Recharts` to chart visual SGPA progression across multiple semesters.
+A dynamic grid-based GUI timetable displays lectures corresponding precisely to the logged-in user. Dashboards use `Recharts` to chart visual SGPA progression across multiple semesters.
 
 ---
 

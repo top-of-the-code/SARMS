@@ -12,4 +12,5 @@ public interface CourseRepository extends MongoRepository<Course, String> {
     List<Course> findByCategory(String category);
     List<Course> findByActiveSemester(boolean activeSemester);
     boolean existsByCode(String code);
+    List<Course> findBySemesterAndCategoryAndDepartmentCode(int semester, String category, String departmentCode);
 }
