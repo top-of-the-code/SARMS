@@ -7,8 +7,10 @@ import com.sarms.dto.StudentRegistrationResponse;
 import com.sarms.model.Course;
 import com.sarms.model.Student;
 import com.sarms.model.User;
+import com.sarms.repository.CourseRepository;
 import com.sarms.repository.StudentRepository;
 import com.sarms.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class StudentService {
 
@@ -28,6 +31,7 @@ public class StudentService {
     private final PasswordEncoder passwordEncoder;
     private final CourseService courseService;
     private final MarksService marksService;
+    private final CourseRepository courseRepository;
 
     private static final Map<String, Integer> GRADE_POINTS = Map.of(
             "A+", 10, "A", 9, "B+", 8, "B", 7, "C", 6, "D", 5, "F", 0
@@ -37,12 +41,14 @@ public class StudentService {
                            UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            CourseService courseService,
-                           MarksService marksService) {
+                           MarksService marksService,
+                           CourseRepository courseRepository) {
         this.studentRepository = studentRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.courseService = courseService;
         this.marksService = marksService;
+        this.courseRepository = courseRepository;
     }
 
     public List<Student> getAllStudents() {
@@ -108,7 +114,7 @@ public class StudentService {
         user.setName(request.getFullName());
         userRepository.save(user);
 
-        // Create Student document
+        // Create Student document with currentSemester = 1
         Student student = new Student();
         student.setRollNo(rollNo);
         student.setName(request.getFullName());
@@ -120,8 +126,26 @@ public class StudentService {
         student.setDob(LocalDate.parse(request.getDob()));
         student.setProgram(request.getProgram());
         student.setBatchYear(request.getBatchYear());
+        student.setCurrentSemester(1);
         student.setEmail(request.getFullName().toLowerCase().replace(" ", ".") + "@mrca.edu");
         studentRepository.save(student);
+
+        // Auto-enroll in semester 1 core courses for the student's department
+        String deptCode = request.getProgram().contains(" - ")
+                ? request.getProgram().split(" - ")[1] : request.getProgram();
+        List<Course> sem1CoreCourses = courseRepository.findBySemesterAndCategoryAndDepartmentCode(
+                1, "core", deptCode);
+
+        if (!sem1CoreCourses.isEmpty()) {
+            List<String> courseCodes = sem1CoreCourses.stream()
+                    .map(Course::getCode).collect(Collectors.toList());
+            EnrollmentRequest enrollReq = new EnrollmentRequest();
+            enrollReq.setSemester(1);
+            enrollReq.setCourseCodes(courseCodes);
+            enrollInCourses(rollNo, enrollReq);
+            log.info("Auto-enrolled {} in {} semester 1 core courses for dept {}",
+                    rollNo, courseCodes.size(), deptCode);
+        }
 
         return new StudentRegistrationResponse(rollNo, tempPassword, request.getFullName());
     }

@@ -20,6 +20,9 @@ export default function CourseRegistration() {
   
   const [detailCourse, setDetailCourse] = useState(null);
 
+  const [studentProgram, setStudentProgram] = useState('');
+  const [studentSemester, setStudentSemester] = useState(1);
+
   useEffect(() => {
     Promise.all([
       api.get('/courses'),
@@ -27,27 +30,30 @@ export default function CourseRegistration() {
     ])
       .then(([coursesRes, studentRes]) => {
         setCourses(coursesRes.data);
-
-        // Check if this student already has semester 4 courses enrolled
         const student = studentRes.data;
-        const sem4Record = (student.academicRecord || []).find(r => r.semester === 4);
+        setStudentProgram(student.program || '');
+        const currentSem = student.currentSemester || 1;
+        setStudentSemester(currentSem);
 
-        if (sem4Record && sem4Record.courses && sem4Record.courses.length > 0) {
+        // Check if this student already has current semester courses enrolled
+        const currentSemRecord = (student.academicRecord || []).find(r => r.semester === currentSem);
+
+        if (currentSemRecord && currentSemRecord.courses && currentSemRecord.courses.length > 0) {
           // Student already enrolled — restore their enrolled course codes
-          const enrolledCodes = sem4Record.courses.map(c => c.courseCode);
+          const enrolledCodes = currentSemRecord.courses.map(c => c.courseCode);
           setSelected(enrolledCodes);
           setConfirmed(true);
         } else {
-          // Fresh registration — pre-select only core courses
-          const semCourses = coursesRes.data.filter(c => c.semester === 4 || c.category === 'uwe' || c.category === 'ccc');
-          const coreCodes = semCourses.filter(c => c.category === 'core').map(c => c.code);
+          // Fresh registration — pre-select only core courses for current semester
+          const semCourses = coursesRes.data.filter(c => c.semester === currentSem || c.category === 'uwe' || c.category === 'ccc');
+          const coreCodes = semCourses.filter(c => c.category === 'core' && c.semester === currentSem).map(c => c.code);
           setSelected(coreCodes);
         }
       })
       .catch(err => console.error('Failed to fetch data:', err));
   }, [currentUser.id]);
 
-  const SEMESTER_COURSES = courses.filter(c => c.semester === 4 || c.category === 'uwe' || c.category === 'ccc');
+  const SEMESTER_COURSES = courses.filter(c => c.semester === studentSemester || c.category === 'uwe' || c.category === 'ccc');
 
   const totalCredits = SEMESTER_COURSES
     .filter(c => selected.includes(c.code))
@@ -68,7 +74,7 @@ export default function CourseRegistration() {
     setEnrolling(true);
     try {
       await api.post(`/students/${currentUser.id}/enroll`, {
-        semester: 4,
+        semester: studentSemester,
         courseCodes: selected
       });
       setShowModal(false);
@@ -121,7 +127,7 @@ export default function CourseRegistration() {
       <div className="flex items-start justify-between mb-8 flex-wrap gap-4 print:hidden">
         <div>
           <h2 className="text-3xl font-extrabold text-navy">Course Registration</h2>
-          <p className="text-sm font-medium text-gray-500 mt-2">Semester 4 · Spring 2026</p>
+          <p className="text-sm font-medium text-gray-500 mt-2">Semester {studentSemester} · Spring 2026</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -192,7 +198,7 @@ export default function CourseRegistration() {
         title="Confirm Course Registration"
       >
         <p className="text-sm font-medium text-gray-600 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
-          You are about to lock in <strong>{selected.length} courses</strong> totalling <strong className="text-navy">{totalCredits} credits</strong> for the Spring 2026 semester.
+          You are about to lock in <strong>{selected.length} courses</strong> totalling <strong className="text-navy">{totalCredits} credits</strong> for the Semester {studentSemester} (Spring 2026).
         </p>
         <div className="space-y-3 max-h-72 overflow-y-auto pr-2 mb-6">
           {SEMESTER_COURSES.filter(c => selected.includes(c.code)).map(c => (

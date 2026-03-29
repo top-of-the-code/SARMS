@@ -31,6 +31,7 @@ public class Student {
     private LocalDate dob;
     private String program;         // "B.Tech Computer Science"
     private int batchYear;
+    private int currentSemester = 1;
     private String email;
     private String bloodGroup;
 
