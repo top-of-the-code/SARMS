@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { COURSES } from '../../data/courses';
+import { useState, useEffect } from 'react';
+import api from '../../services/api';
 import Modal from '../../components/Modal';
 import { useShowToast } from '../../components/Layout';
 import { Upload, AlertTriangle, Layers } from 'lucide-react';
@@ -16,7 +16,13 @@ export default function UploadResults() {
   const showToast = useShowToast();
   
   // Local snapshot to simulate data persistence
-  const [localCourses, setLocalCourses] = useState(COURSES.map(c => ({ ...c })));
+  const [localCourses, setLocalCourses] = useState([]);
+  
+  useEffect(() => {
+    api.get('/courses')
+      .then(res => setLocalCourses(res.data))
+      .catch(err => showToast(err.response?.data?.error || 'Failed to fetch courses', 'error'));
+  }, []);
   
   const [selectedGroup, setSelectedGroup] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
@@ -31,18 +37,24 @@ export default function UploadResults() {
   // Check how many are unpublished
   const unpublishedCount = relevantCourses.filter(c => !c.resultsPublished).length;
 
-  function handlePublish() {
+  async function handlePublish() {
     if (!activeGroup) return;
 
-    setLocalCourses(prev => prev.map(c => {
-      if (activeGroup.semesters.includes(c.semester)) {
-        return { ...c, resultsPublished: true };
-      }
-      return c;
-    }));
-    
-    setShowConfirm(false);
-    showToast(`Results published successfully for ${activeGroup.value}`, 'success');
+    try {
+      await api.put('/courses/publish', { semesters: activeGroup.semesters });
+      
+      setLocalCourses(prev => prev.map(c => {
+        if (activeGroup.semesters.includes(c.semester)) {
+          return { ...c, resultsPublished: true };
+        }
+        return c;
+      }));
+      
+      setShowConfirm(false);
+      showToast(`Results published successfully for ${activeGroup.value}`, 'success');
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Failed to publish results', 'error');
+    }
   }
 
   return (

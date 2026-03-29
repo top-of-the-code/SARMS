@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { validateCredentials, USERS } from '../data/users';
+import api from '../services/api';
 import { GraduationCap, Eye, EyeOff, LogIn, AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 // Redirect to home page per role
@@ -31,36 +31,31 @@ export default function LoginPage() {
   const [forgotError, setForgotError]       = useState('');
   const [showNewPw, setShowNewPw]           = useState(false);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    setTimeout(() => {
-      const success = login(id, password);
-      if (success) {
-        // Determine role to redirect
-        const user = validateCredentials(id.trim(), password);
-        navigate(ROLE_HOME[user.role], { replace: true });
-      } else {
-        setError('Invalid ID or password');
-        setLoading(false);
-      }
-    }, 500);
+    const result = await login(id, password);
+    if (result.success) {
+      navigate(ROLE_HOME[result.user.role], { replace: true });
+    } else {
+      setError(result.error || 'Invalid ID or password');
+      setLoading(false);
+    }
   }
 
   function handleForgotStep1(e) {
     e.preventDefault();
     setForgotError('');
-    const user = USERS.find(u => u.id === forgotId.trim());
-    if (!user) {
-      setForgotError('User not found');
-    } else {
-      setView('forgot-2');
+    if (!forgotId.trim()) {
+      setForgotError('Please enter your ID');
+      return;
     }
+    setView('forgot-2');
   }
 
-  function handleForgotStep2(e) {
+  async function handleForgotStep2(e) {
     e.preventDefault();
     setForgotError('');
     if (newPassword !== confirmPassword) {
@@ -71,14 +66,19 @@ export default function LoginPage() {
       setForgotError('Password must be at least 4 characters');
       return;
     }
-    const user = USERS.find(u => u.id === forgotId.trim());
-    if (user) {
-      user.password = newPassword;
+    
+    try {
+      await api.post('/auth/forgot-password', {
+        userId: forgotId.trim(),
+        newPassword: newPassword
+      });
+      setView('forgot-success');
+      setForgotId('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setForgotError(err.response?.data?.error || 'Failed to update password');
     }
-    setView('forgot-success');
-    setForgotId('');
-    setNewPassword('');
-    setConfirmPassword('');
   }
 
   return (

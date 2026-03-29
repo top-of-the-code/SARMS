@@ -140,9 +140,9 @@ export const MARKS_DATA = {
 export function calcWeightedTotal(marks, components) {
   let total = 0;
   components.forEach(comp => {
-    // Each component is marked out of 100, weighted by comp.weight %
+    // In this system, marks are entered directly out of the component's weight limit
     const scored = marks[comp.id] ?? 0;
-    total += (scored / 100) * comp.weight;
+    total += scored;
   });
   return Math.round(total * 10) / 10;
 }

@@ -1,22 +1,7 @@
 import { useState } from 'react';
+import api from '../../services/api';
 import { useShowToast } from '../../components/Layout';
 import { CheckCircle, Copy, UserPlus, FileText, KeyRound } from 'lucide-react';
-
-let yearCounters = {};
-
-function generateRollNo(year) {
-  yearCounters[year] = (yearCounters[year] || 40) + 1;
-  return `CS-${year}-${String(yearCounters[year]).padStart(3, '0')}`;
-}
-
-function generatePassword() {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
-  let pwd = "";
-  for (let i = 0; i < 8; i++) {
-    pwd += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return pwd;
-}
 
 const EMPTY_FORM = {
   fullName: '', fatherName: '', motherName: '', guardianPhone: '',
@@ -57,17 +42,20 @@ export default function StudentRegistration() {
     return errs;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
 
-    const generatedRoll = generateRollNo(form.batchYear);
-    const generatedPwd = generatePassword();
-    setRollNo(generatedRoll);
-    setTempPassword(generatedPwd);
-    setSubmitted(true);
-    showToast(`Registration Successful`, 'success');
+    try {
+      const res = await api.post('/students/register', form);
+      setRollNo(res.data.rollNo);
+      setTempPassword(res.data.temporaryPassword);
+      setSubmitted(true);
+      showToast(`Registration Successful`, 'success');
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Registration failed', 'error');
+    }
   }
 
   function handleReset() {

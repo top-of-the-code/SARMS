@@ -1,118 +1,106 @@
 # CompScience University ERP
 
-A complete, **frontend-only** University ERP Web Application built with **React + Tailwind CSS**. Features three role-based portals (Student, Faculty, Admin) with realistic mock data throughout.
+A complete **Full-Stack University ERP Web Application** featuring three distinct role-based portals (Student, Faculty, Admin). Build with **React + Tailwind CSS** on the frontend, and secured by a **Spring Boot + MongoDB** backend.
 
 ---
 
 ## 🚀 Getting Started
 
-```bash
-# Navigate to the project directory
-cd "path/to/SARMS_website"
+To run the application locally, you will need to start both the frontend development server and the backend Spring Boot server.
 
-# Install dependencies
+### 1. Start the Backend Server
+Make sure you have Java 17+ installed. We use the wrapped local Maven to run the application.
+
+```cmd
+cd path/to/SARMS
+cd server
+apache-maven-3.9.6\bin\mvn spring-boot:run
+```
+The backend will run on `http://localhost:8080` and connect to the configured MongoDB Atlas cluster automatically. On its very first run, it will automatically seed the database with departments, users, courses, and timetables.
+
+### 2. Start the Frontend Server
+Open a new terminal window:
+
+```cmd
+cd path/to/SARMS
 npm install
-
-# Start the development server
 npm run dev
 ```
-
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## 🔐 Demo Login Credentials
+## 🔐 Credentials & Authentication
 
-The application uses an in-memory simulated backend database (`/src/data/users.js`) with 10 generated users for each role.
+The application is secured with **JWT (JSON Web Tokens)**. When the backend first boots, it seeds the database with realistic demo accounts.
 
-| Role     | ID Range                   | Password Format |
-|----------|----------------------------|-----------------|
-| Student  | CS-2022-001 to CS-2022-010 | pass001         |
-| Faculty  | FAC-001 to FAC-010         | fac001          |
-| Admin    | ADM-001 to ADM-010         | adm001          |
+| Role     | Example ID         | Password |
+|----------|--------------------|----------|
+| Student  | STUD-2022-001      | pass001  |
+| Faculty  | FAC-001            | fac001   |
+| Admin    | ADM-001            | adm001   |
 
-> For security and clean UI purposes, there are no credential hints on the login page itself. Use any valid combination exactly matching the database.
+> The authentication system includes secure password hashing, role-based database queries, and a fully functional route-guard system on the React router.
 
 ---
 
-## 📁 Folder Structure
+## 📁 Project Architecture
 
 ```
-src/
-├── context/
-│   └── AuthContext.jsx       # Auth state (currentUser, login, logout)
-├── hooks/
-│   └── useToast.js           # Toast notification queue
-├── data/                     # All mock data (no API calls)
-│   ├── credentials.js        # User login credentials
-│   ├── courses.js            # All courses + grade mapping utility
-│   ├── students.js           # 12 student profiles + academic records
-│   ├── faculty.js            # Faculty profiles
-│   ├── timetable.js          # Weekly schedule slots
-│   └── marksManagement.js    # Grading components + student marks
-├── components/               # Shared UI components
-│   ├── Layout.jsx            # Sidebar + header shell + ToastContext
-│   ├── Sidebar.jsx           # Role-aware nav (graduation cap logo)
-│   ├── Header.jsx            # Top bar: avatar, role badge, logout
-│   ├── Modal.jsx             # Reusable overlay modal
-│   ├── Toast.jsx             # Toast notifications (success/error/info)
-│   └── ProtectedRoute.jsx    # Role-based route guard
-├── pages/
-│   ├── LoginPage.jsx         # Clean minimal login form (hardcoded validation)
-│   ├── student/
-│   │   ├── Timetable.jsx          # Weekly grid (Mon–Sat, 8 AM–6 PM)
-│   │   ├── CourseRegistration.jsx # Add/drop electives, credit counter
-│   │   └── AcademicReport.jsx     # Grades, SGPA, CGPA, bar chart
-│   ├── faculty/
-│   │   ├── CourseManagement.jsx   # Course cards + edit modal
-│   │   └── MarksManagement.jsx    # Grading components + marks table
-│   └── admin/
-│       ├── CourseOversight.jsx    # Master course table, create/edit
-│       ├── StudentManagement.jsx  # Searchable table + profile editor
-│       └── StudentRegistration.jsx # New student form + roll gen
-└── App.jsx                   # React Router config
+SARMS/
+├── server/                   # Spring Boot Backend
+│   ├── src/main/java/.../sarms/
+│   │   ├── config/           # Security & CORS Config
+│   │   ├── controller/       # REST API Endpoints
+│   │   ├── model/            # MongoDB Document Entities (Student, Course, Marks, User)
+│   │   ├── repository/       # MongoRepositories
+│   │   ├── security/         # JWT Generation & Filter logic
+│   │   ├── service/          # Business Logic (Grading, Enrollment, Profile management)
+│   │   └── seed/             # Database initialization (DataSeeder)
+│   └── src/main/resources/
+│       └── application.properties # MongoDB URI, Port, JWT Secret
+│
+├── src/                      # React Frontend
+│   ├── components/           # Reusable UI elements (Layout, Sidebar, Modal)
+│   ├── context/              # AuthContext (Handles JWT interceptors)
+│   ├── pages/
+│   │   ├── admin/            # Course/Student Management, Uploading Results
+│   │   ├── faculty/          # Marks Entry, Course Syllabus Editor
+│   │   └── student/          # Registration, Academic Report, Timetable
+│   └── services/
+│       └── api.js            # Axios instance with Auto-JWT injection
+└── package.json
 ```
 
 ---
 
-## 🎨 Design System
+## 🧩 Key System Features
 
-| Token       | Value     |
-|-------------|-----------|
-| Navy        | `#0A1F44` |
-| Gold        | `#C9A84C` |
-| Background  | `#F5F5F5` |
-| Font        | Inter     |
+### Student Course Enrollment
+Students dynamically enroll in courses for the active semester. The backend algorithm guarantees database atomicity: adding the course to their `AcademicRecord` (as "In Progress"), creating empty gradebooks inside the `Marks` collection, and incrementing the course occupancy tracker concurrently.
 
----
+### Mathematics & Grade Publishing
+Faculty define custom assessment components (Midsem, Quizzes, Assignments). The frontend manages raw inputs against dynamically scaled dynamic component limits.
+When the Admin clicks **Publish Results**, a backend orchestrator triggers:
+1. Locks the Course and Marks Document so faculty can no longer edit grades.
+2. Extracts raw marks and mathematically scales them exactly to 100%.
+3. Maps final percentages into Letter Grades (A+, A, B) and calculates standard Grade Points (10, 9, 8).
+4. Replaces the temporary "IP" placeholders in the Student's `AcademicRecord` and permanently recomputes their SGPA.
 
-## 🧩 Key Component Notes
-
-### `Layout.jsx`
-The main shell that wraps all authenticated pages. It renders the `<Sidebar>` and `<Header>`, then an `<Outlet>` for the active page. Also provides a `ToastContext` so any child page can call `useShowToast()` to display notifications without prop-drilling.
-
-### `AuthContext.jsx`
-Holds `currentUser` in state. `login(id, password)` validates against the mock credentials and sets the user. `logout()` clears it. No tokens or sessions — pure in-memory state.
-
-### `Timetable.jsx`
-Uses CSS Grid with absolute positioning to lay slots onto the time rows. Each slot spans rows proportionally by `startHour` and `endHour`. Click a slot to see full details.
-
-### `MarksManagement.jsx`
-Faculty first defines **grading components** (name + weight %). Weights must total 100%. Marks are then entered per student per component (each out of 100), and the system auto-calculates: `weighted_total = Σ (mark × weight/100)`. Past-semester courses are locked read-only.
-
-### `AcademicReport.jsx`
-Uses [Recharts](https://recharts.org) `BarChart` for the SGPA trend. The last semester bar is highlighted in gold. CGPA is derived by the `calculateCGPA()` utility from `students.js`.
-
-### `StudentRegistration.jsx`
-On submit, generates a roll number `CS-YYYY-XXX` using an in-memory counter per batch year. Shows a success card with a "Copy Roll Number" button.
+### Timetable & Dashboards
+A completely dynamic grid-based GUI timetable displays lectures corresponding precisely to the logged-in user. Dashboards use `Recharts` to chart visual SGPA progression across multiple semesters.
 
 ---
 
 ## 🛠 Tech Stack
 
-- **React 19** — functional components + hooks
-- **Tailwind CSS 3** — all styling, custom navy/gold tokens
-- **React Router v6** — nested routes, role-based redirects
-- **Recharts** — SGPA bar chart
-- **Lucide React** — icons throughout
-- **Vite** — dev server + build tool
+### Frontend
+- **React 19** — Functional components + Hooks
+- **Tailwind CSS 3** — Utility-first design system with custom brand tokens (Navy `#0A1F44` & Gold `#C9A84C`)
+- **React Router v6** — Advanced nested routes and strict permission routing
+- **Axios** — HTTP requests and response interceptors
+
+### Backend
+- **Java 17 + Spring Boot 3** — RESTful API architecture
+- **Spring Security + JWT** — Stateless request authorization
+- **MongoDB Atlas + Spring Data Mongo** — NoSQL flexible data storage

@@ -1,26 +1,57 @@
-import { useState } from 'react';
-import { COURSES } from '../../data/courses';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import Modal from '../../components/Modal';
+import { useShowToast } from '../../components/Layout';
 import { Lock, Plus, Minus, CheckCircle, BookOpen, User, Hash, AlertTriangle, Layers, Globe, Clock, FileText, Info } from 'lucide-react';
 
-const SEMESTER_COURSES = COURSES.filter(c => c.semester === 4 || c.category === 'uwe' || c.category === 'ccc');
 const MAX_CREDITS = 25;
 
 export default function CourseRegistration() {
-  const initialSelected = SEMESTER_COURSES
-    .filter(c => c.category === 'core')
-    .map(c => c.code);
+  const { currentUser } = useAuth();
+  const showToast = useShowToast();
 
-  const [selected, setSelected] = useState(initialSelected);
+  const [courses, setCourses] = useState([]);
+  const [selected, setSelected] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [limitAlert, setLimitAlert] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
   
   const [detailCourse, setDetailCourse] = useState(null);
 
+  useEffect(() => {
+    Promise.all([
+      api.get('/courses'),
+      api.get(`/students/${currentUser.id}`)
+    ])
+      .then(([coursesRes, studentRes]) => {
+        setCourses(coursesRes.data);
+
+        // Check if this student already has semester 4 courses enrolled
+        const student = studentRes.data;
+        const sem4Record = (student.academicRecord || []).find(r => r.semester === 4);
+
+        if (sem4Record && sem4Record.courses && sem4Record.courses.length > 0) {
+          // Student already enrolled — restore their enrolled course codes
+          const enrolledCodes = sem4Record.courses.map(c => c.courseCode);
+          setSelected(enrolledCodes);
+          setConfirmed(true);
+        } else {
+          // Fresh registration — pre-select only core courses
+          const semCourses = coursesRes.data.filter(c => c.semester === 4 || c.category === 'uwe' || c.category === 'ccc');
+          const coreCodes = semCourses.filter(c => c.category === 'core').map(c => c.code);
+          setSelected(coreCodes);
+        }
+      })
+      .catch(err => console.error('Failed to fetch data:', err));
+  }, [currentUser.id]);
+
+  const SEMESTER_COURSES = courses.filter(c => c.semester === 4 || c.category === 'uwe' || c.category === 'ccc');
+
   const totalCredits = SEMESTER_COURSES
     .filter(c => selected.includes(c.code))
-    .reduce((sum, c) => sum + c.credits, 0);
+    .reduce((sum, c) => sum + (Number(c.credits) || 0), 0);
 
   function toggle(code, credits) {
     const isSelected = selected.includes(code);
@@ -33,9 +64,21 @@ export default function CourseRegistration() {
     );
   }
 
-  function handleFinalize() {
-    setShowModal(false);
-    setConfirmed(true);
+  async function handleFinalize() {
+    setEnrolling(true);
+    try {
+      await api.post(`/students/${currentUser.id}/enroll`, {
+        semester: 4,
+        courseCodes: selected
+      });
+      setShowModal(false);
+      setConfirmed(true);
+      showToast(`Successfully enrolled in ${selected.length} courses!`, 'success');
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Enrollment failed', 'error');
+    } finally {
+      setEnrolling(false);
+    }
   }
 
   const core = SEMESTER_COURSES.filter(c => c.category === 'core');
@@ -167,8 +210,8 @@ export default function CourseRegistration() {
            <button onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-600 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
              Review Changes
            </button>
-           <button onClick={handleFinalize} className="flex-1 px-4 py-2.5 bg-navy text-white text-sm font-extrabold rounded-xl hover:bg-navy-light transition-all shadow-md focus:ring-4 focus:ring-navy/20">
-             Confirm &amp; Register
+           <button onClick={handleFinalize} disabled={enrolling} className="flex-1 px-4 py-2.5 bg-navy text-white text-sm font-extrabold rounded-xl hover:bg-navy-light transition-all shadow-md focus:ring-4 focus:ring-navy/20 disabled:opacity-50">
+             {enrolling ? 'Enrolling…' : 'Confirm & Register'}
            </button>
         </div>
       </Modal>

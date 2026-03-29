@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { COURSES, getGrade } from '../../data/courses';
-import { MARKS_DATA, calcWeightedTotal } from '../../data/marksManagement';
+import api from '../../services/api';
+import { getGrade } from '../../data/courses';
+import { calcWeightedTotal } from '../../data/marksManagement';
 import { useShowToast } from '../../components/Layout';
 import { Lock, Save, ChevronDown } from 'lucide-react';
 
@@ -26,32 +27,39 @@ export default function MarksManagement() {
   const { currentUser } = useAuth();
   const showToast = useShowToast();
 
-  const facultyCourses = COURSES.filter(c => c.facultyId === currentUser.id && MARKS_DATA[c.code]);
-  const [selectedCode, setSelectedCode] = useState(facultyCourses[0]?.code || '');
+  const [facultyCourses, setFacultyCourses] = useState([]);
+  const [selectedCode, setSelectedCode] = useState('');
+  const [courseData, setCourseData] = useState(null);
 
-  const [marksState, setMarksState] = useState(() => {
-    const clone = {};
-    facultyCourses.forEach(c => {
-      if (MARKS_DATA[c.code]) {
-        clone[c.code] = {
-          ...MARKS_DATA[c.code],
-          gradingComponents: MARKS_DATA[c.code].gradingComponents.map(g => ({ ...g })),
-          studentMarks: MARKS_DATA[c.code].studentMarks.map(s => ({ ...s, marks: { ...s.marks } })),
-        };
-      }
-    });
-    return clone;
-  });
+  useEffect(() => {
+    api.get(`/courses?facultyId=${currentUser.id}`)
+      .then(res => {
+        setFacultyCourses(res.data);
+        if (res.data.length > 0) {
+          setSelectedCode(res.data[0].code);
+        }
+      })
+      .catch(err => showToast('Failed to load courses', 'error'));
+  }, [currentUser.id]);
 
-  const courseData = marksState[selectedCode];
-  const isLocked   = courseData && !courseData.activeSemester;
+  useEffect(() => {
+    if (selectedCode) {
+      api.get(`/marks/${selectedCode}`)
+        .then(res => setCourseData(res.data))
+        .catch(err => setCourseData(null));
+    } else {
+      setCourseData(null);
+    }
+  }, [selectedCode]);
+
+  const isLocked = courseData && !courseData.activeSemester;
 
   function updateMark(rollNo, compId, value) {
     if (isLocked) return;
-    setMarksState(prev => {
+    setCourseData(prev => {
+      if (!prev) return prev;
       const updated = { ...prev };
-      const cData = updated[selectedCode];
-      cData.studentMarks = cData.studentMarks.map(student => {
+      updated.studentMarks = updated.studentMarks.map(student => {
         if (student.rollNo === rollNo) {
           return {
             ...student,
@@ -64,8 +72,14 @@ export default function MarksManagement() {
     });
   }
 
-  function handleSaveAll() {
-    showToast(`Marks updated successfully for ${selectedCode}`, 'success');
+  async function handleSaveAll() {
+    if (!courseData) return;
+    try {
+      await api.put(`/marks/${selectedCode}`, courseData.studentMarks);
+      showToast(`Marks updated successfully for ${selectedCode}`, 'success');
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Failed to update marks', 'error');
+    }
   }
 
   return (
@@ -84,7 +98,7 @@ export default function MarksManagement() {
           className="appearance-none w-full px-5 py-3.5 text-sm font-bold text-navy bg-white border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-navy/20 focus:border-navy transition-all cursor-pointer"
         >
           {facultyCourses.map(c => (
-             <option key={c.code} value={c.code}>{c.code}, {c.name} {MARKS_DATA[c.code]?.activeSemester ? '' : '(Past)'}</option>
+             <option key={c.code} value={c.code}>{c.code}, {c.name}</option>
           ))}
         </select>
         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-navy">

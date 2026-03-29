@@ -1,6 +1,5 @@
-import { useState, useMemo } from 'react';
-import { COURSES } from '../../data/courses';
-import { FACULTY } from '../../data/faculty';
+import { useState, useMemo, useEffect } from 'react';
+import api from '../../services/api';
 import { departments } from '../../data/departments';
 import { currentSemester } from '../../data/config';
 import Modal from '../../components/Modal';
@@ -13,11 +12,7 @@ const STATUS_BADGE = {
   'Pending': 'bg-amber-100 text-amber-700'
 };
 
-const initialCourses = COURSES.map(c => ({
-  ...c,
-  // Add derived Pending status if it doesn't have gradedComponents or description
-  status: c.status || ((!c.description || (c.gradedComponents && c.gradedComponents.length === 0)) ? 'Pending' : 'Active')
-}));
+
 
 const EMPTY_FORM = { 
   codeNum: '', 
@@ -33,7 +28,17 @@ const EMPTY_FORM = {
 
 export default function CourseOversight() {
   const showToast = useShowToast();
-  const [courses, setCourses] = useState(initialCourses);
+  const [courses, setCourses] = useState([]);
+  const [facultyList, setFacultyList] = useState([]);
+  
+  useEffect(() => {
+    Promise.all([api.get('/courses'), api.get('/faculty')])
+      .then(([courseRes, facRes]) => {
+        setCourses(courseRes.data);
+        setFacultyList(facRes.data);
+      })
+      .catch(err => showToast(err.response?.data?.error || 'Failed to load data', 'error'));
+  }, []);
   
   // Filters
   const [search, setSearch]   = useState('');
@@ -98,8 +103,8 @@ export default function CourseOversight() {
     setModalMode('edit');
   }
 
-  function handleSave() {
-    const faculty = FACULTY.find(f => f.id === formData.facultyId);
+  async function handleSave() {
+    const faculty = facultyList.find(f => f.id === formData.facultyId);
     const finalCode = `${formData.departmentCode}${formData.codeNum}`;
     
     if (modalMode === 'create') {
@@ -108,28 +113,46 @@ export default function CourseOversight() {
         code: finalCode,
         category: formData.type,
         facultyName: faculty?.name || 'Unassigned', 
-        enrolled: 0,
-        status: 'Pending',
-        gradedComponents: [],
-        syllabusTopics: []
+        status: 'Pending'
       };
-      setCourses(prev => [newCourse, ...prev]);
-      showToast(`Course ${finalCode} created.`, 'success');
+      
+      try {
+        const res = await api.post('/courses', newCourse);
+        setCourses(prev => [res.data, ...prev]);
+        showToast(`Course ${finalCode} created.`, 'success');
+        setModalMode(null);
+      } catch (err) {
+        showToast(err.response?.data?.error || 'Failed to create course', 'error');
+      }
     } else {
-      setCourses(prev => prev.map(c => c.code === editCode ? { ...c, ...formData, code: finalCode, category: formData.type, facultyName: faculty?.name || c.facultyName } : c));
-      showToast(`Course ${finalCode} updated.`, 'success');
+      const updates = { 
+        ...formData, 
+        code: finalCode, 
+        category: formData.type, 
+        facultyName: faculty?.name || formData.facultyName 
+      };
+      
+      try {
+        const res = await api.put(`/courses/${editCode}`, updates);
+        setCourses(prev => prev.map(c => c.code === editCode ? res.data : c));
+        showToast(`Course ${finalCode} updated.`, 'success');
+        setModalMode(null);
+      } catch (err) {
+        showToast(err.response?.data?.error || 'Failed to update course', 'error');
+      }
     }
-    setModalMode(null);
   }
 
-  function toggleStatus(code) {
-    setCourses(prev => prev.map(c => {
-      if (c.code !== code) return c;
-      const newStatus = c.status === 'Active' ? 'Inactive' : 'Active';
-      return { ...c, status: newStatus };
-    }));
-    setConfirmToggle(null);
-    showToast(`Status updated successfully.`, 'success');
+  async function toggleStatus(code) {
+    try {
+      const res = await api.put(`/courses/${code}/status`);
+      setCourses(prev => prev.map(c => c.code === code ? res.data : c));
+      setConfirmToggle(null);
+      showToast(`Status updated successfully.`, 'success');
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Failed to update status', 'error');
+      setConfirmToggle(null);
+    }
   }
 
   function handleField(key, val) { 
@@ -348,10 +371,11 @@ export default function CourseOversight() {
              
              <div className="col-span-2 md:col-span-1">
                <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Assign Faculty</label>
-               <select value={formData.facultyId} onChange={e => handleField('facultyId', e.target.value)}
-                 className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy bg-white">
-                 {FACULTY.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-               </select>
+                 <select value={formData.facultyId} onChange={e => handleField('facultyId', e.target.value)}
+                   className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy bg-white">
+                   <option value="">-- Unassigned --</option>
+                   {facultyList.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                 </select>
              </div>
           </div>
         </div>

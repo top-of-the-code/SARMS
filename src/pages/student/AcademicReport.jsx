@@ -1,13 +1,27 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { STUDENTS, calculateCGPA } from '../../data/students';
+import api from '../../services/api';
 import { universityName } from '../../data/config';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
-import { TrendingUp, Award, BookOpen, Download, ShieldCheck, ChevronDown, FileText, FileBadge } from 'lucide-react';
+import { TrendingUp, Award, BookOpen, Download, AlertTriangle, ChevronDown, FileText, FileBadge } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+
+function calculateCGPA(academicRecord) {
+  if (!academicRecord || academicRecord.length === 0) return 0;
+  let totalPoints = 0;
+  let totalCredits = 0;
+  academicRecord.forEach(rec => {
+    rec.courses.forEach(c => {
+      if (c.grade === 'IP') return; // skip In Progress
+      totalCredits += c.credits;
+      totalPoints += (c.credits * (c.gradePoints || 0));
+    });
+  });
+  return totalCredits === 0 ? 0 : (totalPoints / totalCredits);
+}
 
 function GradeBadge({ grade }) {
   const map = {
@@ -18,18 +32,21 @@ function GradeBadge({ grade }) {
     'C':  'bg-yellow-100 text-yellow-700',
     'D':  'bg-orange-100 text-orange-700',
     'F':  'bg-red-100 text-red-700',
+    'IP': 'bg-purple-100 text-purple-700',
   };
   return (
     <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${map[grade] || 'bg-gray-100 text-gray-600'}`}>
-      {grade}
+      {grade === 'IP' ? 'In Progress' : grade}
     </span>
   );
 }
+
 
 function getMockMarks(grade, code) {
   const map = { 'A+': 95, 'A': 85, 'B+': 76, 'B': 68, 'C': 55, 'D': 45, 'F': 35 };
   const base = map[grade] || '--';
   if (base === '--') return base;
+  if (!code) return base;
   let numericStr = code.replace(/[^0-9]/g, '');
   const modifier = numericStr ? parseInt(numericStr) % 5 : 0; 
   return base + modifier;
@@ -77,13 +94,34 @@ const generatePDF = async (elementRef, filename) => {
 
 export default function AcademicReport() {
   const { currentUser } = useAuth();
-  const student = STUDENTS.find(s => s.rollNo === currentUser.id);
+  const [student, setStudent] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get(`/students/${currentUser.id}`)
+      .then(res => {
+        setStudent(res.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, [currentUser.id]);
 
   const reportRef = useRef(null);
   const marksheetRef = useRef(null);
 
   const [downloadDropdown, setDownloadDropdown] = useState(false);
   const [selectedSemForMarksheet, setSelectedSemForMarksheet] = useState(null);
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center font-bold text-gray-500">
+        Loading academic records...
+      </div>
+    );
+  }
 
   if (!student) {
     return (
@@ -93,12 +131,15 @@ export default function AcademicReport() {
     );
   }
 
+  const completedSemesters = (student.academicRecord || []).filter(sem =>
+    sem.courses && sem.courses.some(c => c.grade !== 'IP')
+  );
   const cgpa = calculateCGPA(student.academicRecord);
-  const totalCredits = student.academicRecord.reduce((acc, sem) => acc + sem.courses.reduce((s, c) => s + c.credits, 0), 0);
+  const totalCredits = completedSemesters.reduce((acc, sem) => acc + sem.courses.filter(c => c.grade !== 'IP').reduce((s, c) => s + c.credits, 0), 0);
 
   const chartData = student.academicRecord.map(s => ({
     name: `Sem ${s.semester}`,
-    SGPA: s.sgpa,
+    SGPA: s.sgpa || 0,
   }));
 
   const handleDownloadFullReport = async () => {
@@ -178,7 +219,7 @@ export default function AcademicReport() {
         <SummaryCard
           icon={TrendingUp}
           label="Semesters Completed"
-          value={student.academicRecord.length}
+          value={completedSemesters.length}
           sub="Total recorded"
           accent="bg-white border-navy/20 shadow-card"
           iconColor="text-navy bg-navy/10 p-2 rounded-xl"
@@ -239,11 +280,11 @@ export default function AcademicReport() {
                     </thead>
                     <tbody>
                       {sem.courses.map((c, i) => (
-                        <tr key={c.code} className={`border-b border-gray-100 last:border-0 ${i % 2 === 0 ? 'bg-gray-50/30' : 'bg-white'}`}>
-                          <td className="px-6 py-3 font-black text-navy">{c.code}</td>
-                          <td className="px-4 py-3 font-semibold text-gray-700">{c.name}</td>
+                        <tr key={c.courseCode} className={`border-b border-gray-100 last:border-0 ${i % 2 === 0 ? 'bg-gray-50/30' : 'bg-white'}`}>
+                          <td className="px-6 py-3 font-black text-navy">{c.courseCode}</td>
+                          <td className="px-4 py-3 font-semibold text-gray-700">{c.courseName}</td>
                           <td className="text-center px-4 py-3 font-bold text-gray-500">{c.credits}</td>
-                          <td className="text-center px-4 py-3 font-bold text-gray-700">{getMockMarks(c.grade, c.code)}</td>
+                          <td className="text-center px-4 py-3 font-bold text-gray-700">{getMockMarks(c.grade, c.courseCode)}</td>
                           <td className="text-center px-4 py-3"><GradeBadge grade={c.grade} /></td>
                           <td className="text-right px-6 py-3 font-black text-navy">{c.gradePoints}</td>
                         </tr>
@@ -255,18 +296,18 @@ export default function AcademicReport() {
                 <div className="px-6 py-4 border-t border-gray-200 bg-white flex justify-end items-center">
                   <div className="flex items-center gap-4">
                     <span className="text-xs font-black uppercase tracking-widest text-gray-400">SGPA</span>
-                    <span className="text-xl font-black text-navy">{sem.sgpa.toFixed(2)}</span>
+                    <span className="text-xl font-black text-navy">{(sem.sgpa || 0).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
               
               {/* Badges underneath the table organically */}
-              {sem.sgpa >= 8.5 && (
+              {(sem.sgpa || 0) >= 8.5 && (
                 <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-xl flex items-center justify-center gap-3 font-bold text-sm shadow-sm print:hidden mx-auto max-w-2xl mt-4 w-full">
                   <span className="text-xl">🏅</span> Vice Chancellor's List, Semester {sem.semester}
                 </div>
               )}
-              {sem.sgpa <= 5.0 && (
+              {(sem.sgpa || 0) <= 5.0 && sem.courses.some(c => c.grade !== 'IP') && (
                 <div className="bg-amber-50 border border-amber-200 text-amber-800 px-6 py-4 rounded-xl flex items-center justify-center gap-3 font-bold text-sm shadow-sm print:hidden mx-auto max-w-2xl mt-4 w-full">
                   <AlertTriangle className="w-5 h-5 text-amber-500" /> ⚠️ Conditional Standing, Please meet your academic advisor (Semester {sem.semester})
                 </div>
@@ -349,11 +390,11 @@ export default function AcademicReport() {
             </thead>
             <tbody>
               {selectedSemForMarksheet.courses.map((c, i) => (
-                <tr key={c.code} style={{ backgroundColor: i % 2 === 0 ? '#f8fafc' : 'white', borderBottom: '1px solid #e2e8f0' }}>
-                  <td style={{ padding: '12px 16px', fontWeight: '800' }}>{c.code}</td>
-                  <td style={{ padding: '12px 16px', fontWeight: '600' }}>{c.name}</td>
+                <tr key={c.courseCode} style={{ backgroundColor: i % 2 === 0 ? '#f8fafc' : 'white', borderBottom: '1px solid #e2e8f0' }}>
+                  <td style={{ padding: '12px 16px', fontWeight: '800' }}>{c.courseCode}</td>
+                  <td style={{ padding: '12px 16px', fontWeight: '600' }}>{c.courseName}</td>
                   <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 'bold', color: '#64748b' }}>{c.credits}</td>
-                  <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 'bold' }}>{getMockMarks(c.grade, c.code)}</td>
+                  <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 'bold' }}>{getMockMarks(c.grade, c.courseCode)}</td>
                   <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 'bold' }}>{c.grade}</td>
                   <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '800' }}>{c.gradePoints}</td>
                 </tr>
@@ -377,7 +418,7 @@ export default function AcademicReport() {
              </div>
              <div style={{ textAlign: 'right', backgroundColor: '#f8fafc', padding: '16px 24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                <span style={{ fontSize: '12px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', marginRight: '16px' }}>SGPA</span>
-               <span style={{ fontSize: '24px', fontWeight: '900', color: '#0A1F44' }}>{selectedSemForMarksheet.sgpa.toFixed(2)}</span>
+               <span style={{ fontSize: '24px', fontWeight: '900', color: '#0A1F44' }}>{(selectedSemForMarksheet.sgpa || 0).toFixed(2)}</span>
              </div>
           </div>
 

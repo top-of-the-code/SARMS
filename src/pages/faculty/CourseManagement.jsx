@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { COURSES } from '../../data/courses';
+import api from '../../services/api';
 import Modal from '../../components/Modal';
 import { useShowToast } from '../../components/Layout';
 import { BookMarked, Users, Edit2, Trash2 } from 'lucide-react';
@@ -9,12 +9,16 @@ export default function CourseManagement() {
   const { currentUser } = useAuth();
   const showToast = useShowToast();
 
-  const facultyCourses = COURSES.filter(c => c.facultyId === currentUser.id);
-
+  const [localCourses, setLocalCourses] = useState([]);
   const [editCourse, setEditCourse]     = useState(null); 
-  const [localCourses, setLocalCourses] = useState(facultyCourses);
   const [formData, setFormData]         = useState({});
   const [newTopic, setNewTopic]         = useState('');
+
+  useEffect(() => {
+    api.get(`/courses?facultyId=${currentUser.id}`)
+      .then(res => setLocalCourses(res.data))
+      .catch(err => showToast('Failed to load courses', 'error'));
+  }, [currentUser.id]);
 
   function openEdit(course) {
     setEditCourse(course.code);
@@ -28,11 +32,22 @@ export default function CourseManagement() {
     };
     
     gc.forEach(c => {
-      if (c.type === 'Quiz') graded.quiz = { enabled: true, m: c.m, n: c.n, weight: c.weight };
-      if (c.type === 'Assignment') graded.assignment = { enabled: true, m: c.m, n: c.n, weight: c.weight };
-      if (c.type === 'Project') graded.project = { enabled: true, parts: c.parts || [] };
-      if (c.type === 'Midsem') graded.midsem = { enabled: true, weight: c.weight };
-      if (c.type === 'Endsem') graded.endsem = { enabled: true, weight: c.weight };
+      if (c.id === 'quiz') {
+         graded.quiz.enabled = true; graded.quiz.weight = c.weight;
+         const match = c.name?.match(/Best (\d+) of (\d+)/);
+         if (match) { graded.quiz.n = match[1]; graded.quiz.m = match[2]; }
+      } else if (c.id === 'assign') {
+         graded.assignment.enabled = true; graded.assignment.weight = c.weight;
+         const match = c.name?.match(/Best (\d+) of (\d+)/);
+         if (match) { graded.assignment.n = match[1]; graded.assignment.m = match[2]; }
+      } else if (c.id && c.id.startsWith('proj_')) {
+         graded.project.enabled = true;
+         graded.project.parts.push({ name: c.name, weight: c.weight });
+      } else if (c.id === 'midsem') {
+         graded.midsem.enabled = true; graded.midsem.weight = c.weight;
+      } else if (c.id === 'endsem') {
+         graded.endsem.enabled = true; graded.endsem.weight = c.weight;
+      }
     });
 
     setFormData({
@@ -44,20 +59,26 @@ export default function CourseManagement() {
     });
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     const g = formData.graded;
     const finalComponents = [];
-    if (g.quiz.enabled) finalComponents.push({ type: 'Quiz', m: Number(g.quiz.m), n: Number(g.quiz.n), weight: Number(g.quiz.weight) });
-    if (g.assignment.enabled) finalComponents.push({ type: 'Assignment', m: Number(g.assignment.m), n: Number(g.assignment.n), weight: Number(g.assignment.weight) });
-    if (g.project.enabled) finalComponents.push({ type: 'Project', parts: g.project.parts.map(p=>({name: p.name, weight: Number(p.weight)})) });
-    if (g.midsem.enabled) finalComponents.push({ type: 'Midsem', weight: Number(g.midsem.weight) });
-    if (g.endsem.enabled) finalComponents.push({ type: 'Endsem', weight: Number(g.endsem.weight) });
+    if (g.quiz.enabled) finalComponents.push({ id: 'quiz', name: g.quiz.n && g.quiz.m ? `Best ${g.quiz.n} of ${g.quiz.m} Quizzes` : 'Quizzes', weight: Number(g.quiz.weight) });
+    if (g.assignment.enabled) finalComponents.push({ id: 'assign', name: g.assignment.n && g.assignment.m ? `Best ${g.assignment.n} of ${g.assignment.m} Assignments` : 'Assignments', weight: Number(g.assignment.weight) });
+    if (g.project.enabled) g.project.parts.forEach((p, i) => finalComponents.push({ id: `proj_${i}`, name: p.name || `Project Part ${i+1}`, weight: Number(p.weight) }));
+    if (g.midsem.enabled) finalComponents.push({ id: 'midsem', name: 'Midsem Exam', weight: Number(g.midsem.weight) });
+    if (g.endsem.enabled) finalComponents.push({ id: 'endsem', name: 'Endsem Exam', weight: Number(g.endsem.weight) });
 
-    setLocalCourses(prev =>
-      prev.map(c => c.code === editCourse ? { ...c, ...formData, gradedComponents: finalComponents } : c)
-    );
-    setEditCourse(null);
-    showToast(`Course updated successfully`, 'success');
+    const updates = { ...formData, gradedComponents: finalComponents };
+
+    try {
+      const res = await api.put(`/courses/${editCourse}`, updates);
+      setLocalCourses(prev => prev.map(c => c.code === editCourse ? res.data : c));
+      await api.put(`/marks/${editCourse}/components`, finalComponents).catch(() => {});
+      setEditCourse(null);
+      showToast(`Course updated successfully`, 'success');
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Failed to update course', 'error');
+    }
   }
 
   function addTopic() {

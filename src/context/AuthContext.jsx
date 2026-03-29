@@ -1,5 +1,5 @@
-import { createContext, useContext, useState } from 'react';
-import { validateCredentials } from '../data/users';
+import { createContext, useContext, useState, useEffect } from 'react';
+import api from '../services/api';
 
 // ── Auth Context ──────────────────────────────────────────────
 // Provides currentUser (null when logged out) and login/logout helpers.
@@ -7,36 +7,68 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Check token on mount
+  useEffect(() => {
+    const token = localStorage.getItem('sarms_token');
+    if (token) {
+      api.get('/auth/me')
+        .then(res => {
+          setCurrentUser({
+            id: res.data.userId,
+            role: res.data.role,
+            name: res.data.name
+          });
+        })
+        .catch(() => {
+          localStorage.removeItem('sarms_token');
+          setCurrentUser(null);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  }, []);
 
   /**
-   * Attempt login. Returns true on success, false on failure.
-   * @param {string} id    - student roll no / faculty ID / admin ID
-   * @param {string} password
+   * Attempt login via API. Returns {success, user, error}
    */
-  function login(id, password) {
-    const user = validateCredentials(id.trim(), password);
-    if (user) {
+  async function login(id, password) {
+    try {
+      const res = await api.post('/auth/login', { userId: id.trim(), password });
+      localStorage.setItem('sarms_token', res.data.token);
+      
+      const user = {
+        id: res.data.userId,
+        role: res.data.role,
+        name: res.data.name
+      };
+      
       setCurrentUser(user);
-      return true;
+      return { success: true, user: user };
+    } catch (err) {
+      return { 
+        success: false, 
+        error: err.response?.data?.error || 'Invalid ID or password' 
+      };
     }
-    return false;
   }
 
   function logout() {
+    localStorage.removeItem('sarms_token');
     setCurrentUser(null);
   }
 
   return (
     <AuthContext.Provider value={{ currentUser, login, logout }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
 
-/**
- * Custom hook to access AuthContext.
- * Must be used inside an AuthProvider.
- */
 export function useAuth() {
   return useContext(AuthContext);
 }

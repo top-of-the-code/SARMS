@@ -1,19 +1,18 @@
 import { useState, useMemo, useEffect } from 'react';
-import { STUDENTS } from '../../data/students';
+import api from '../../services/api';
 import Modal from '../../components/Modal';
 import { useShowToast } from '../../components/Layout';
 import { Search, Edit2, Save, BookOpen, User, Edit3, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function StudentManagement() {
   const showToast = useShowToast();
-  // Ensure deep copy to avoid mutating original file exports
-  const [students, setStudents] = useState(STUDENTS.map(s => ({
-    ...s,
-    academicRecord: (s.academicRecord || []).map(sem => ({
-      ...sem,
-      courses: (sem.courses || []).map(c => ({ ...c })),
-    })),
-  })));
+  const [students, setStudents] = useState([]);
+
+  useEffect(() => {
+    api.get('/students')
+      .then(res => setStudents(res.data))
+      .catch(err => showToast(err.response?.data?.error || 'Failed to fetch students', 'error'));
+  }, []);
 
   // Shared Filters
   const [search1, setSearch1] = useState('');
@@ -82,8 +81,8 @@ export default function StudentManagement() {
           rows.push({
             rollNo: s.rollNo,
             studentName: s.name,
-            courseCode: c.code,
-            courseName: c.name,
+            courseCode: c.courseCode,
+            courseName: c.courseName,
             semesterTaken: sem.semester,
             credits: c.credits,
             grade: c.grade || 'N/A'
@@ -119,10 +118,15 @@ export default function StudentManagement() {
     setProfileDraft({ ...student });
   }
 
-  function saveProfile() {
-    setStudents(prev => prev.map(s => s.rollNo === viewStudent.rollNo ? { ...s, ...profileDraft } : s));
-    setViewStudent(null);
-    showToast(`Profile updated for ${profileDraft.name}`, 'success');
+  async function saveProfile() {
+    try {
+      const res = await api.put(`/students/${viewStudent.rollNo}`, profileDraft);
+      setStudents(prev => prev.map(s => s.rollNo === viewStudent.rollNo ? res.data : s));
+      setViewStudent(null);
+      showToast(`Profile updated for ${profileDraft.name}`, 'success');
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Failed to update profile', 'error');
+    }
   }
 
   // ── Edit Grades Flow ──
@@ -142,38 +146,34 @@ export default function StudentManagement() {
   }, [editGradesRoll, editGradesSem, foundStudent]);
 
   function handleNewGradeChange(code, val) {
-    setEditGradesData(prev => prev.map(c => c.code === code ? {...c, newGrade: val} : c));
+    setEditGradesData(prev => prev.map(c => c.courseCode === code ? {...c, newGrade: val} : c));
   }
 
-  function confirmGradeChanges() {
-    setStudents(prev => prev.map(s => {
-      if (s.rollNo === foundStudent.rollNo) {
-        return {
-          ...s,
-          academicRecord: s.academicRecord.map(r => {
-            if (r.semester === Number(editGradesSem)) {
-              return {
-                ...r,
-                courses: r.courses.map(c => {
-                  const ed = editGradesData.find(x => x.code === c.code);
-                  if (ed && ed.newGrade) {
-                    return {...c, grade: ed.newGrade, gradePoints: getPointsForGrade(ed.newGrade)};
-                  }
-                  return c;
-                })
-              }
-            }
-            return r;
-          })
-        };
-      }
-      return s;
-    }));
-    showToast('Student grades updated successfully', 'success');
-    setEditGradesRoll('');
-    setEditGradesSem('');
-    setEditGradesData(null);
-    setShowGradesConfirm(false);
+  async function confirmGradeChanges() {
+    const payload = {
+      semester: Number(editGradesSem),
+      courses: editGradesData
+        .filter(c => c.newGrade && c.newGrade !== c.grade)
+        .map(c => ({ courseCode: c.courseCode, newGrade: c.newGrade }))
+    };
+
+    if (payload.courses.length === 0) {
+      setShowGradesConfirm(false);
+      return;
+    }
+
+    try {
+      const res = await api.put(`/students/${foundStudent.rollNo}/grades`, payload);
+      setStudents(prev => prev.map(s => s.rollNo === foundStudent.rollNo ? res.data : s));
+      
+      showToast('Student grades updated successfully', 'success');
+      setEditGradesRoll('');
+      setEditGradesSem('');
+      setEditGradesData(null);
+      setShowGradesConfirm(false);
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Failed to update grades', 'error');
+    }
   }
 
   function getPointsForGrade(g) {
@@ -409,16 +409,16 @@ export default function StudentManagement() {
                 </thead>
                 <tbody>
                   {editGradesData.map(c => (
-                    <tr key={c.code} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                      <td className="px-5 py-3 font-bold text-gold">{c.code}</td>
-                      <td className="px-5 py-3 font-medium text-gray-800">{c.name}</td>
+                    <tr key={c.courseCode} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                      <td className="px-5 py-3 font-bold text-gold">{c.courseCode}</td>
+                      <td className="px-5 py-3 font-medium text-gray-800">{c.courseName}</td>
                       <td className="px-5 py-3 text-center">
                         <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-md font-bold text-xs">{c.grade || '--'}</span>
                       </td>
                       <td className="px-5 py-3 text-center">
                         <select 
                           value={c.newGrade || ''} 
-                          onChange={(e) => handleNewGradeChange(c.code, e.target.value)}
+                          onChange={(e) => handleNewGradeChange(c.courseCode, e.target.value)}
                           className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-bold text-navy focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"
                         >
                           <option value="">--</option>
