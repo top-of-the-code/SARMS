@@ -20,7 +20,7 @@ export default function CourseManagement() {
   useEffect(() => {
     api.get(`/courses?facultyId=${currentUser.id}`)
       .then(res => setLocalCourses(res.data))
-      .catch(err => showToast('Failed to load courses', 'error'));
+      .catch(() => showToast('Failed to load courses', 'error'));
   }, [currentUser.id]);
 
   function openEdit(course) {

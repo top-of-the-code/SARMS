@@ -42,14 +42,14 @@ export default function MarksManagement() {
           setSelectedCode(res.data[0].code);
         }
       })
-      .catch(err => showToast('Failed to load courses', 'error'));
+      .catch(() => showToast('Failed to load courses', 'error'));
   }, [currentUser.id]);
 
   useEffect(() => {
     if (selectedCode) {
       api.get(`/marks/${selectedCode}`)
         .then(res => setCourseData(res.data))
-        .catch(err => setCourseData(null));
+        .catch(() => setCourseData(null));
     } else {
       setCourseData(null);
     }

@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { CheckCircle, XCircle, Info, X } from 'lucide-react';
 
 // Icon and color mapping per toast type

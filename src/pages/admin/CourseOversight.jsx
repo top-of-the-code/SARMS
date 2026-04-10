@@ -4,7 +4,6 @@ import { departments } from '../../data/departments';
 import { currentSemester } from '../../data/config';
 import Modal from '../../components/Modal';
 import { useShowToast } from '../../components/Layout';
-import { useAuth } from '../../context/AuthContext';
 import { useTermConfig } from '../../context/TermConfigContext';
 import { Plus, Edit2, Power, Search, Filter, BookMarked, Calendar, AlertTriangle, Loader2 } from 'lucide-react';
 
@@ -33,8 +32,7 @@ const EMPTY_FORM = {
 
 export default function CourseOversight() {
   const showToast = useShowToast();
-  const { currentUser } = useAuth();
-  const { termConfig, mergeTermFromServer } = useTermConfig();
+  const { termConfig } = useTermConfig();
   const [courses, setCourses] = useState([]);
   const [facultyList, setFacultyList] = useState([]);
 
@@ -51,7 +49,7 @@ export default function CourseOversight() {
 
   // Filters
   const [search, setSearch]   = useState('');
-  const [yearFilter, setYearFilter] = useState('');
+  const [semFilter, setSemFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   
   // Sort
@@ -71,8 +69,8 @@ export default function CourseOversight() {
       const q = search.toLowerCase();
       raw = raw.filter(c => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || (c.facultyName && c.facultyName.toLowerCase().includes(q)));
     }
-    if (yearFilter) {
-      raw = raw.filter(c => c.year === Number(yearFilter));
+    if (semFilter) {
+      raw = raw.filter(c => c.semester === Number(semFilter));
     }
     if (typeFilter) {
       raw = raw.filter(c => c.semesterType === typeFilter);
@@ -84,7 +82,7 @@ export default function CourseOversight() {
       return sortDesc ? codeB.localeCompare(codeA) : codeA.localeCompare(codeB);
     });
     return raw;
-  }, [courses, search, yearFilter, typeFilter, sortDesc]);
+  }, [courses, search, semFilter, typeFilter, sortDesc]);
 
 
   function openCreate() {
@@ -178,7 +176,7 @@ export default function CourseOversight() {
     setFormData(d => ({ ...d, [key]: val })); 
   }
 
-  const years = [...new Set(courses.map(c => c.year).filter(Boolean))].sort((a,b)=>b-a);
+  const semesters = [...new Set(courses.map(c => c.semester).filter(Boolean))].sort((a,b)=>a-b);
 
   return (
     <div>
@@ -215,11 +213,11 @@ export default function CourseOversight() {
         </div>
         <div className="relative">
           <select
-            value={yearFilter} onChange={e => setYearFilter(e.target.value)}
+            value={semFilter} onChange={e => setSemFilter(e.target.value)}
             className="appearance-none px-5 py-2.5 pr-10 text-sm border-2 border-gray-100 rounded-xl focus:outline-none focus:border-gold focus:ring-4 focus:ring-gold/20 transition-all font-bold text-navy bg-white min-w-[140px] cursor-pointer"
           >
-            <option value="">All Years</option>
-            {years.map(y => <option key={y} value={y}>{y}</option>)}
+            <option value="">All Semesters</option>
+            {semesters.map(s => <option key={s} value={s}>Semester {s}</option>)}
           </select>
           <Filter className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
         </div>

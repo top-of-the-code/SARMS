@@ -43,7 +43,7 @@ export default function MyCourses() {
           try {
              const res = await api.get(`/marks/${c.courseCode}`);
              mMap[c.courseCode] = res.data;
-          } catch(e) {
+          } catch {
              mMap[c.courseCode] = null;
           }
         }

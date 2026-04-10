@@ -179,11 +179,6 @@ export default function StudentManagement() {
     }
   }
 
-  function getPointsForGrade(g) {
-    const m = { 'A+': 10, 'A': 9, 'B+': 8, 'B': 7, 'C': 6, 'D': 5, 'F': 0 };
-    return m[g] || 0;
-  }
-
   return (
     <div className="flex flex-col gap-10">
       
