@@ -10,4 +10,5 @@ public interface StudentRepository extends MongoRepository<Student, String> {
     List<Student> findByProgram(String program);
     List<Student> findByBatchYear(int batchYear);
     long countByRollNoStartingWith(String prefix);
+    boolean existsByPersonalPhone(String personalPhone);
 }

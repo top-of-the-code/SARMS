@@ -20,6 +20,7 @@
 /Users/chhayankgupta/Desktop/sarms/SARMS/server/src/main/java/com/sarms/security/JwtAuthFilter.java
 /Users/chhayankgupta/Desktop/sarms/SARMS/server/src/main/java/com/sarms/security/UserDetailsServiceImpl.java
 /Users/chhayankgupta/Desktop/sarms/SARMS/server/src/main/java/com/sarms/controller/MarksController.java
+/Users/chhayankgupta/Desktop/sarms/SARMS/server/src/main/java/com/sarms/service/AdminService.java
 /Users/chhayankgupta/Desktop/sarms/SARMS/server/src/main/java/com/sarms/security/JwtUtil.java
 /Users/chhayankgupta/Desktop/sarms/SARMS/server/src/main/java/com/sarms/repository/EnrollmentRepository.java
 /Users/chhayankgupta/Desktop/sarms/SARMS/server/src/main/java/com/sarms/repository/StudentRepository.java

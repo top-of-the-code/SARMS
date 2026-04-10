@@ -64,10 +64,18 @@ public class StudentService {
         Student student = getByRollNo(rollNo);
         if (updates.getName() != null) student.setName(updates.getName());
         if (updates.getFatherName() != null) student.setFatherName(updates.getFatherName());
+        if (updates.getMotherName() != null) student.setMotherName(updates.getMotherName());
+        if (updates.getGuardianPhone() != null) student.setGuardianPhone(updates.getGuardianPhone());
         if (updates.getPersonalPhone() != null) student.setPersonalPhone(updates.getPersonalPhone());
         if (updates.getAddress() != null) student.setAddress(updates.getAddress());
+        if (updates.getAddressDetails() != null) student.setAddressDetails(updates.getAddressDetails());
         if (updates.getProgram() != null) student.setProgram(updates.getProgram());
         if (updates.getBatchYear() != 0) student.setBatchYear(updates.getBatchYear());
+        if (updates.getEmail() != null) student.setEmail(updates.getEmail());
+        if (updates.getBloodGroup() != null) student.setBloodGroup(updates.getBloodGroup());
+        if (updates.getDob() != null) student.setDob(updates.getDob());
+        // Allow toggling active status (Change 7)
+        student.setActive(updates.isActive());
         return studentRepository.save(student);
     }
 
@@ -98,6 +106,27 @@ public class StudentService {
     }
 
     public StudentRegistrationResponse registerStudent(StudentRegistrationRequest request) {
+        if (!request.getFullName().matches("^[A-Za-z\\s]+$") ||
+            !request.getFatherName().matches("^[A-Za-z\\s]+$") ||
+            !request.getMotherName().matches("^[A-Za-z\\s]+$")) {
+            throw new RuntimeException("Names must solely contain alphabetic characters and spaces.");
+        }
+
+        if (!request.getPersonalPhone().matches("^\\d{10}$") ||
+            !request.getGuardianPhone().matches("^\\d{10}$")) {
+            throw new RuntimeException("Phone must be exactly 10 digits.");
+        }
+
+        LocalDate dobDate = LocalDate.parse(request.getDob());
+        LocalDate minDate = LocalDate.of(1900, 1, 1);
+        if (dobDate.isAfter(LocalDate.now()) || dobDate.isBefore(minDate)) {
+            throw new RuntimeException("DOB must be between 1900 and today.");
+        }
+
+        if (studentRepository.existsByPersonalPhone(request.getPersonalPhone())) {
+            throw new RuntimeException("Phone number already registered: " + request.getPersonalPhone());
+        }
+
         // Generate roll number: STUD-{year}-{sequential}
         String prefix = "STUD-" + request.getBatchYear() + "-";
         long count = studentRepository.countByRollNoStartingWith(prefix);
@@ -122,11 +151,33 @@ public class StudentService {
         student.setMotherName(request.getMotherName());
         student.setGuardianPhone(request.getGuardianPhone());
         student.setPersonalPhone(request.getPersonalPhone());
-        student.setAddress(request.getAddress());
+        // Build structured address (Change 9)
+        if (request.getHouseNo() != null || request.getStreet() != null ||
+            request.getCity() != null || request.getState() != null || request.getPinCode() != null) {
+            Student.Address addr = new Student.Address();
+            addr.setHouseNo(request.getHouseNo());
+            addr.setStreet(request.getStreet());
+            addr.setCity(request.getCity());
+            addr.setState(request.getState());
+            addr.setPinCode(request.getPinCode());
+            student.setAddressDetails(addr);
+            // Also set legacy flat string for backward compat
+            String flatAddr = String.join(", ",
+                    request.getHouseNo() != null ? request.getHouseNo() : "",
+                    request.getStreet() != null ? request.getStreet() : "",
+                    request.getCity() != null ? request.getCity() : "",
+                    request.getState() != null ? request.getState() : "",
+                    request.getPinCode() != null ? request.getPinCode() : ""
+            ).replaceAll("(, )+", ", ").replaceAll("^, |, $", "");
+            student.setAddress(flatAddr);
+        } else if (request.getAddress() != null) {
+            student.setAddress(request.getAddress());
+        }
         student.setDob(LocalDate.parse(request.getDob()));
         student.setProgram(request.getProgram());
         student.setBatchYear(request.getBatchYear());
         student.setCurrentSemester(1);
+        student.setActive(true);
         student.setEmail(request.getFullName().toLowerCase().replace(" ", ".") + "@mrca.edu");
         studentRepository.save(student);
 
@@ -198,6 +249,8 @@ public class StudentService {
             // Increment the enrolled count on the course
             courseService.incrementEnrollment(courseCode);
         }
+
+        semRecord.setRegistrationFinalized(true);
 
         return studentRepository.save(student);
     }

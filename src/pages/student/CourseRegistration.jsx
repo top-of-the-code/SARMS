@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useTermConfig } from '../../context/TermConfigContext';
 import api from '../../services/api';
 import Modal from '../../components/Modal';
 import { useShowToast } from '../../components/Layout';
 import { Lock, Plus, Minus, CheckCircle, BookOpen, User, Hash, AlertTriangle, Layers, Globe, Clock, FileText, Info } from 'lucide-react';
 
 const MAX_CREDITS = 25;
+const DEFAULT_ACTIVE_TERM = { type: 'Spring', year: 2026 };
 
 export default function CourseRegistration() {
   const { currentUser } = useAuth();
+  const { termConfig } = useTermConfig();
   const showToast = useShowToast();
 
   const [courses, setCourses] = useState([]);
@@ -21,36 +24,68 @@ export default function CourseRegistration() {
   const [detailCourse, setDetailCourse] = useState(null);
 
   const [studentProgram, setStudentProgram] = useState('');
+  const [studentSem, setStudentSem] = useState(1);
+  const [studentActive, setStudentActive] = useState(true);
+  const [completedCourses, setCompletedCourses] = useState(new Set());
+  const activeSemInfo = termConfig || DEFAULT_ACTIVE_TERM;
 
   useEffect(() => {
     Promise.all([
       api.get('/courses'),
-      api.get(`/students/${currentUser.id}`)
+      api.get(`/students/${currentUser.id}`),
     ])
       .then(([coursesRes, studentRes]) => {
         setCourses(coursesRes.data);
         const student = studentRes.data;
+        const sSem = student.currentSemester || 1;
+        setStudentSem(sSem);
         setStudentProgram(student.program || '');
+        setStudentActive(student.active !== false);
 
-        // Check if this student already has semester 4 courses enrolled
-        const sem4Record = (student.academicRecord || []).find(r => r.semester === 4);
+        // Change 1: Collect completed CCC/UWE course codes from past semesters
+        const completed = new Set();
+        (student.academicRecord || []).forEach(rec => {
+          if (rec.semester === sSem) return; // skip current semester
+          (rec.courses || []).forEach(c => {
+            if (c.grade && c.grade !== 'IP') {
+              completed.add(c.courseCode);
+            }
+          });
+        });
+        setCompletedCourses(completed);
 
-        if (sem4Record && sem4Record.courses && sem4Record.courses.length > 0) {
-          // Student already enrolled — restore their enrolled course codes
-          const enrolledCodes = sem4Record.courses.map(c => c.courseCode);
+        // Check if this student already has finalized their registration
+        const currentSemRecord = (student.academicRecord || []).find(r => r.semester === sSem);
+
+        if (currentSemRecord && currentSemRecord.registrationFinalized) {
+          const enrolledCodes = currentSemRecord.courses.map(c => c.courseCode);
           setSelected(enrolledCodes);
           setConfirmed(true);
         } else {
-          // Fresh registration — pre-select only core courses
-          const semCourses = coursesRes.data.filter(c => c.semester === 4 || c.category === 'uwe' || c.category === 'ccc');
+          const deptCode = (student.program || '').includes(' - ') ? (student.program || '').split(' - ')[1] : student.program;
+          const semCourses = coursesRes.data.filter(c => {
+             const isTermValid = ['Both', activeSemInfo.type].includes(c.semesterType);
+             const isExempt = ['uwe', 'ccc'].includes(c.category);
+             const isMatchDept = c.departmentCode === deptCode || c.category !== 'core';
+             return (c.semester === sSem && isTermValid && isMatchDept) || isExempt;
+          });
           const coreCodes = semCourses.filter(c => c.category === 'core').map(c => c.code);
           setSelected(coreCodes);
         }
       })
       .catch(err => console.error('Failed to fetch data:', err));
-  }, [currentUser.id]);
+  }, [currentUser.id, activeSemInfo.type]);
 
-  const SEMESTER_COURSES = courses.filter(c => c.semester === 4 || c.category === 'uwe' || c.category === 'ccc');
+  const deptCode = studentProgram.includes(' - ') ? studentProgram.split(' - ')[1] : studentProgram;
+  const SEMESTER_COURSES = courses.filter(c => {
+      const isTermValid = ['Both', activeSemInfo.type].includes(c.semesterType);
+      const isExempt = ['uwe', 'ccc'].includes(c.category);
+      const isMatchDept = c.departmentCode === deptCode || c.category !== 'core';
+      const matchesSem = (c.semester === studentSem && isTermValid && isMatchDept) || isExempt;
+      // Change 1: Filter out completed CCC/UWE courses
+      if (isExempt && completedCourses.has(c.code)) return false;
+      return matchesSem;
+  });
 
   const totalCredits = SEMESTER_COURSES
     .filter(c => selected.includes(c.code))
@@ -71,7 +106,7 @@ export default function CourseRegistration() {
     setEnrolling(true);
     try {
       await api.post(`/students/${currentUser.id}/enroll`, {
-        semester: 4,
+        semester: studentSem,
         courseCodes: selected
       });
       setShowModal(false);
@@ -88,6 +123,10 @@ export default function CourseRegistration() {
   const majorElective = SEMESTER_COURSES.filter(c => c.category === 'majorElective');
   const uwe = SEMESTER_COURSES.filter(c => c.category === 'uwe');
   const ccc = SEMESTER_COURSES.filter(c => c.category === 'ccc');
+
+  const coreCredits = core.reduce((sum, c) => sum + (Number(c.credits) || 0), 0);
+  const electiveCredits = totalCredits - coreCredits;
+  const remainingCredits = MAX_CREDITS - coreCredits;
 
   const renderSection = (title, icon, description, coursesData) => {
     if (coursesData.length === 0) return null;
@@ -124,7 +163,7 @@ export default function CourseRegistration() {
       <div className="flex items-start justify-between mb-8 flex-wrap gap-4 print:hidden">
         <div>
           <h2 className="text-3xl font-extrabold text-navy">Course Registration</h2>
-          <p className="text-sm font-medium text-gray-500 mt-2">Semester 4 · Spring 2026</p>
+          <p className="text-sm font-medium text-gray-500 mt-2">Semester {studentSem} · {activeSemInfo.type} {activeSemInfo.year}</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -138,13 +177,61 @@ export default function CourseRegistration() {
 
           <button
             onClick={() => setShowModal(true)}
-            disabled={totalCredits === 0}
+            disabled={totalCredits === 0 || totalCredits > MAX_CREDITS}
             className="px-6 py-3.5 bg-navy text-white text-sm font-extrabold rounded-xl hover:bg-navy-light transition-smooth shadow-md disabled:opacity-50"
           >
             {confirmed ? 'Update Registration' : 'Finalize Registration'}
           </button>
         </div>
       </div>
+
+      {/* Change 3: Inactive student banner */}
+      {!studentActive && (
+        <div className="mb-8 flex items-center gap-4 px-6 py-5 bg-gray-100 border border-gray-300 rounded-2xl animate-fade-in print:hidden shadow-sm">
+          <Lock className="w-8 h-8 text-gray-500 shrink-0" />
+          <div>
+            <p className="text-lg font-extrabold text-gray-700">Program Complete</p>
+            <p className="text-sm font-medium text-gray-500 mt-1">
+              Your academic program is complete. Course registration is no longer available.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Change 6: Core credit breakdown */}
+      {studentActive && (
+        <div className="mb-6 flex flex-wrap items-center gap-4 px-5 py-4 bg-navy/5 border border-navy/10 rounded-2xl print:hidden">
+          <div className="flex items-center gap-2 text-sm font-bold text-navy">
+            <span className="px-2.5 py-1 bg-navy text-white rounded-lg text-xs">{coreCredits} cr</span>
+            Core (pre-enrolled)
+          </div>
+          <span className="text-gray-300">+</span>
+          <div className="flex items-center gap-2 text-sm font-bold text-navy">
+            <span className="px-2.5 py-1 bg-gold text-navy rounded-lg text-xs">{electiveCredits} cr</span>
+            Electives selected
+          </div>
+          <span className="text-gray-300">=</span>
+          <div className="flex items-center gap-2 text-sm font-bold text-navy">
+            <span className={`px-2.5 py-1 rounded-lg text-xs font-extrabold ${totalCredits > MAX_CREDITS ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>{totalCredits} / {MAX_CREDITS} cr</span>
+            Total
+          </div>
+          {remainingCredits > 0 && (
+            <span className="ml-auto text-xs font-bold text-gray-400">↳ {remainingCredits} credits available for electives</span>
+          )}
+        </div>
+      )}
+
+      {coreCredits >= MAX_CREDITS && (
+        <div className="mb-8 flex items-start gap-4 px-6 py-5 bg-orange-50 border border-orange-200 rounded-2xl animate-fade-in print:hidden shadow-sm">
+          <AlertTriangle className="w-6 h-6 text-orange-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-extrabold text-orange-900">Pre-enrolled Core Limitations</p>
+            <p className="text-xs font-medium text-orange-800 mt-1">
+              Your mandatory assigned core courses already consume {coreCredits} credits, reaching or exceeding the maximum limit of {MAX_CREDITS}. You will not be able to finalize registration with any additional electives.
+            </p>
+          </div>
+        </div>
+      )}
 
       {confirmed && (
         <div className="mb-8 flex items-center gap-4 px-6 py-5 bg-emerald-50 border border-emerald-200 rounded-2xl animate-fade-in print:hidden shadow-sm">
@@ -187,14 +274,13 @@ export default function CourseRegistration() {
         </div>
       </Modal>
 
-      {/* Confirmation modal */}
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title="Confirm Course Registration"
       >
         <p className="text-sm font-medium text-gray-600 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
-          You are about to lock in <strong>{selected.length} courses</strong> totalling <strong className="text-navy">{totalCredits} credits</strong> for the Spring 2026 semester.
+          You are about to lock in <strong>{selected.length} courses</strong> totalling <strong className="text-navy">{totalCredits} credits</strong> for the {activeSemInfo.type} {activeSemInfo.year} semester.
         </p>
         <div className="space-y-3 max-h-72 overflow-y-auto pr-2 mb-6">
           {SEMESTER_COURSES.filter(c => selected.includes(c.code)).map(c => (
@@ -247,7 +333,7 @@ export default function CourseRegistration() {
             </div>
 
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <p className="text-sm text-gray-700 leading-relaxed font-medium">{detailCourse.description}</p>
+              <p className="text-sm text-gray-700 leading-relaxed font-medium whitespace-pre-line">{detailCourse.description}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

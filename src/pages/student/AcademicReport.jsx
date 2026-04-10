@@ -131,13 +131,15 @@ export default function AcademicReport() {
     );
   }
 
-  const completedSemesters = (student.academicRecord || []).filter(sem =>
+  const validAcademicRecord = (student.academicRecord || []).filter(r => r.semester <= 8);
+
+  const completedSemesters = validAcademicRecord.filter(sem =>
     sem.courses && sem.courses.some(c => c.grade !== 'IP')
   );
-  const cgpa = calculateCGPA(student.academicRecord);
+  const cgpa = calculateCGPA(validAcademicRecord);
   const totalCredits = completedSemesters.reduce((acc, sem) => acc + sem.courses.filter(c => c.grade !== 'IP').reduce((s, c) => s + c.credits, 0), 0);
 
-  const chartData = student.academicRecord.map(s => ({
+  const chartData = validAcademicRecord.map(s => ({
     name: `Sem ${s.semester}`,
     SGPA: s.sgpa || 0,
   }));
@@ -183,7 +185,7 @@ export default function AcademicReport() {
                  <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 font-bold text-xs text-gray-500 uppercase tracking-widest">
                    Completed Semesters
                  </div>
-                 {student.academicRecord.map(sem => (
+                 {validAcademicRecord.map(sem => (
                    <button
                      key={sem.semester}
                      onClick={() => handleDownloadMarksheet(sem)}
@@ -252,7 +254,7 @@ export default function AcademicReport() {
 
         {/* Semesters & Badges */}
         <div className="space-y-10">
-          {student.academicRecord.map(sem => {
+          {validAcademicRecord.map(sem => {
             const semCredits = sem.courses.reduce((s,c)=>s+c.credits,0);
             const termName = getTermName(sem.semester, student.batchYear);
 

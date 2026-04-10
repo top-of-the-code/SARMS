@@ -27,11 +27,13 @@ public class Student {
     private String motherName;
     private String guardianPhone;
     private String personalPhone;
-    private String address;
+    private String address;         // legacy single-string address (kept for backward compat)
+    private Address addressDetails; // structured address (Change 9)
     private LocalDate dob;
     private String program;         // "B.Tech Computer Science"
     private int batchYear;
     private int currentSemester = 1;
+    private boolean active = true;  // false = graduated / manually deactivated (Change 3/7)
     private String email;
     private String bloodGroup;
 
@@ -45,6 +47,7 @@ public class Student {
     public static class SemesterRecord {
         private int semester;
         private double sgpa;
+        private boolean registrationFinalized;
         private List<CourseGrade> courses = new ArrayList<>();
     }
 
@@ -57,5 +60,16 @@ public class Student {
         private double credits;
         private String grade;       // "A+", "A", "B+", etc.
         private int gradePoints;    // 10, 9, 8, ...
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Address {
+        private String houseNo;
+        private String street;
+        private String city;
+        private String state;
+        private String pinCode;
     }
 }

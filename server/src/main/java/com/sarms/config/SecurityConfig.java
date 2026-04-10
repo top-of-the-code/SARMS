@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/login", "/api/auth/forgot-password").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/departments").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/config/**").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // Admin-only endpoints
                 .requestMatchers("/api/students/register").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/students/*/grades").hasRole("ADMIN")

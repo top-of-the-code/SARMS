@@ -12,7 +12,7 @@ export default function ProtectedRoute({ children, requiredRole }) {
   if (!currentUser) return <Navigate to="/" replace />;
 
   if (requiredRole && currentUser.role !== requiredRole) {
-    const redirectMap = { student: '/student/timetable', faculty: '/faculty/courses', admin: '/admin/courses' };
+    const redirectMap = { student: '/student/courses', faculty: '/faculty/courses', admin: '/admin/courses' };
     return <Navigate to={redirectMap[currentUser.role] || '/'} replace />;
   }
 

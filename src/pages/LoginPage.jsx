@@ -6,7 +6,7 @@ import { GraduationCap, Eye, EyeOff, LogIn, AlertCircle, ArrowLeft, CheckCircle2
 
 // Redirect to home page per role
 const ROLE_HOME = {
-  student: '/student/timetable',
+  student: '/student/courses',
   faculty: '/faculty/courses',
   admin:   '/admin/courses',
 };

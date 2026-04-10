@@ -115,7 +115,10 @@ export default function StudentManagement() {
 
   function openEdit(student) {
     setViewStudent(student);
-    setProfileDraft({ ...student });
+    setProfileDraft({ 
+      ...student,
+      addressDetails: student.addressDetails || { houseNo: '', street: '', city: '', state: '', pinCode: '' }
+    });
   }
 
   async function saveProfile() {
@@ -247,7 +250,12 @@ export default function StudentManagement() {
                 {table1Data.map((s, i) => (
                   <tr key={s.rollNo} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-gold/5 transition-colors border-b border-gray-100`}>
                     <td className="px-5 py-4 font-bold text-gold">{s.rollNo}</td>
-                    <td className="px-5 py-4 font-semibold text-navy">{s.name}</td>
+                    <td className="px-5 py-4 font-semibold text-navy">
+                      {s.name}
+                      {s.active === false && (
+                         <span className="ml-2 text-[10px] font-bold uppercase tracking-widest bg-gray-200 text-gray-500 px-2 py-0.5 rounded-md">Inactive</span>
+                      )}
+                    </td>
                     <td className="px-5 py-4 text-gray-600">{s.fatherName}</td>
                     <td className="px-5 py-4 text-gray-600 font-medium">{s.personalPhone}</td>
                     <td className="px-5 py-4 text-gray-500 max-w-[200px] truncate" title={s.address}>{s.address}</td>
@@ -496,11 +504,16 @@ export default function StudentManagement() {
         }
       >
         <div className="grid grid-cols-2 gap-5 px-1 py-2">
+          {/* Name & Basic Details */}
+          <div className="col-span-2">
+            <h4 className="text-sm font-bold text-navy uppercase tracking-widest border-b border-gray-100 pb-2 mb-4">Core Info</h4>
+          </div>
           {[
             { label: 'Full Name', key: 'name' },
             { label: 'Father\'s Name', key: 'fatherName' },
+            { label: 'Mother\'s Name', key: 'motherName' },
             { label: 'Personal Phone', key: 'personalPhone' },
-            { label: 'Address', key: 'address', fullWidth: true },
+            { label: 'Guardian Phone', key: 'guardianPhone' },
             { label: 'Program', key: 'program' },
             { label: 'Year of Joining', key: 'batchYear', type: 'number' },
           ].map(f => (
@@ -514,6 +527,45 @@ export default function StudentManagement() {
               />
             </div>
           ))}
+
+          {/* Address Details */}
+          <div className="col-span-2 mt-4">
+            <h4 className="text-sm font-bold text-navy uppercase tracking-widest border-b border-gray-100 pb-2 mb-4">Residential Address</h4>
+          </div>
+          {[
+            { label: 'House / Flat No.', key: 'houseNo' },
+            { label: 'Street / Area', key: 'street' },
+            { label: 'City', key: 'city' },
+            { label: 'State', key: 'state' },
+            { label: 'PIN Code', key: 'pinCode' },
+          ].map(f => (
+            <div key={f.key}>
+              <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">{f.label}</label>
+              <input 
+                 type="text" 
+                 value={profileDraft.addressDetails?.[f.key] || ''}
+                 onChange={e => setProfileDraft(d => ({ ...d, addressDetails: { ...d.addressDetails, [f.key]: e.target.value } }))}
+                 className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold focus:ring-4 focus:ring-gold/20 font-medium text-navy transition-all" 
+              />
+            </div>
+          ))}
+
+          {/* Account Status */}
+          <div className="col-span-2 mt-4">
+            <h4 className="text-sm font-bold text-navy uppercase tracking-widest border-b border-gray-100 pb-2 mb-4">Account Status</h4>
+            <label className="flex items-center gap-3 cursor-pointer bg-gray-50 px-4 py-3 border border-gray-200 rounded-xl">
+              <input 
+                type="checkbox" 
+                checked={profileDraft.active !== false} 
+                onChange={e => setProfileDraft(d => ({ ...d, active: e.target.checked }))}
+                className="w-5 h-5 text-navy rounded border-gray-300 focus:ring-navy" 
+              />
+              <div>
+                <p className="text-sm font-bold text-navy">Active Student</p>
+                <p className="text-xs text-gray-500 font-medium">Uncheck to mark the student as inactive (e.g. dropped out, program completed).</p>
+              </div>
+            </label>
+          </div>
         </div>
       </Modal>
 

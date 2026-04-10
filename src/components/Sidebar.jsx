@@ -1,5 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import {
   LayoutDashboard, Clock, BookOpen, BarChart2,
   BookMarked, Edit3, Users, GraduationCap,
@@ -9,19 +11,20 @@ import {
 // ── Nav link definitions per role ─────────────────────────────
 const NAV_LINKS = {
   student: [
-    { to: '/student/timetable',     label: 'Timetable',           Icon: Clock },
-    { to: '/student/registration',  label: 'Course Registration', Icon: BookOpen },
-    { to: '/student/report',        label: 'Academic Report',     Icon: BarChart2 },
+    { to: '/student/courses', label: 'My Courses', Icon: BookMarked },
+    { to: '/student/registration', label: 'Course Registration', Icon: BookOpen },
+    { to: '/student/report', label: 'Academic Report', Icon: BarChart2 },
   ],
   faculty: [
-    { to: '/faculty/courses',       label: 'Course Management',   Icon: BookMarked },
-    { to: '/faculty/marks',         label: 'Marks Management',    Icon: Edit3 },
+    { to: '/faculty/courses', label: 'Course Management', Icon: BookMarked },
+    { to: '/faculty/marks', label: 'Marks Management', Icon: Edit3 },
   ],
   admin: [
-    { to: '/admin/courses',         label: 'Course Management',   Icon: BookMarked },
-    { to: '/admin/students',        label: 'Student Management',  Icon: Users },
-    { to: '/admin/register',        label: 'Student Registration',Icon: UserPlus },
-    { to: '/admin/results',         label: 'Upload Results',      Icon: BarChart2 },
+    { to: '/admin/courses', label: 'Course Management', Icon: BookMarked },
+    { to: '/admin/students', label: 'Student Management', Icon: Users },
+    { to: '/admin/register', label: 'Student Registration', Icon: UserPlus },
+    { to: '/admin/results', label: 'Upload Results', Icon: BarChart2 },
+    { to: '/admin/term-control', label: 'Term Control', Icon: Clock },
   ],
 };
 
@@ -29,7 +32,7 @@ const NAV_LINKS = {
 const ROLE_SECTION = {
   student: 'Student Portal',
   faculty: 'Faculty Portal',
-  admin:   'Admin Portal',
+  admin: 'Admin Portal',
 };
 
 /**
@@ -39,10 +42,25 @@ const ROLE_SECTION = {
 export default function Sidebar() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
+  const [isActiveStudent, setIsActiveStudent] = useState(true);
 
   if (!currentUser) return null;
 
-  const links = NAV_LINKS[currentUser.role] || [];
+  // Change 3: Check if student is active
+  useEffect(() => {
+    if (currentUser.role === 'student') {
+      api.get(`/students/${currentUser.id}`)
+        .then(res => {
+          setIsActiveStudent(res.data.active !== false);
+        })
+        .catch(err => console.error('Failed to fetch student status', err));
+    }
+  }, [currentUser]);
+
+  let links = NAV_LINKS[currentUser.role] || [];
+  if (currentUser.role === 'student' && !isActiveStudent) {
+    links = links.filter(link => link.to !== '/student/registration');
+  }
 
   function handleLogout() {
     logout();
@@ -78,10 +96,9 @@ export default function Sidebar() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-smooth group ${
-                isActive
-                  ? 'bg-gold text-navy shadow-sm'
-                  : 'text-white/70 hover:bg-white/10 hover:text-white'
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-smooth group ${isActive
+                ? 'bg-gold text-navy shadow-sm'
+                : 'text-white/70 hover:bg-white/10 hover:text-white'
               }`
             }
           >

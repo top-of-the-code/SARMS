@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { TermConfigProvider } from './context/TermConfigContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -7,19 +8,20 @@ import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 
 // Student portal
-import Timetable        from './pages/student/Timetable';
+import MyCourses from './pages/student/MyCourses';
 import CourseRegistration from './pages/student/CourseRegistration';
-import AcademicReport   from './pages/student/AcademicReport';
+import AcademicReport from './pages/student/AcademicReport';
 
 // Faculty portal
 import CourseManagement from './pages/faculty/CourseManagement';
-import MarksManagement  from './pages/faculty/MarksManagement';
+import MarksManagement from './pages/faculty/MarksManagement';
 
 // Admin portal
-import CourseOversight      from './pages/admin/CourseOversight';
-import StudentManagement    from './pages/admin/StudentManagement';
-import StudentRegistration  from './pages/admin/StudentRegistration';
-import UploadResults        from './pages/admin/UploadResults';
+import CourseOversight from './pages/admin/CourseOversight';
+import StudentManagement from './pages/admin/StudentManagement';
+import StudentRegistration from './pages/admin/StudentRegistration';
+import UploadResults from './pages/admin/UploadResults';
+import TermControl from './pages/admin/TermControl';
 
 /**
  * App, top-level router.
@@ -30,6 +32,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <TermConfigProvider>
         <Routes>
 
           {/* ── Public: Login ─────────────────────────────── */}
@@ -44,10 +47,10 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="timetable" replace />} />
-            <Route path="timetable"    element={<Timetable />} />
+            <Route index element={<Navigate to="courses" replace />} />
+            <Route path="courses" element={<MyCourses />} />
             <Route path="registration" element={<CourseRegistration />} />
-            <Route path="report"       element={<AcademicReport />} />
+            <Route path="report" element={<AcademicReport />} />
           </Route>
 
           {/* ── Faculty Portal ────────────────────────────── */}
@@ -61,7 +64,7 @@ export default function App() {
           >
             <Route index element={<Navigate to="courses" replace />} />
             <Route path="courses" element={<CourseManagement />} />
-            <Route path="marks"   element={<MarksManagement />} />
+            <Route path="marks" element={<MarksManagement />} />
           </Route>
 
           {/* ── Admin Portal ──────────────────────────────── */}
@@ -74,16 +77,18 @@ export default function App() {
             }
           >
             <Route index element={<Navigate to="courses" replace />} />
-            <Route path="courses"  element={<CourseOversight />} />
+            <Route path="courses" element={<CourseOversight />} />
             <Route path="students" element={<StudentManagement />} />
             <Route path="register" element={<StudentRegistration />} />
-            <Route path="results"  element={<UploadResults />} />
+            <Route path="results" element={<UploadResults />} />
+            <Route path="term-control" element={<TermControl />} />
           </Route>
 
           {/* ── Catch-all ─────────────────────────────────── */}
           <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
+        </TermConfigProvider>
       </BrowserRouter>
     </AuthProvider>
   );

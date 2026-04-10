@@ -3,9 +3,11 @@ import api from '../../services/api';
 import Modal from '../../components/Modal';
 import { useShowToast } from '../../components/Layout';
 import { Upload, Shield, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
+import { useTermConfig } from '../../context/TermConfigContext';
 
 export default function UploadResults() {
   const showToast = useShowToast();
+  const { refreshTerm } = useTermConfig();
 
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [userId, setUserId] = useState('');
@@ -30,6 +32,11 @@ export default function UploadResults() {
       setShowAuthModal(false);
       setUserId('');
       setPassword('');
+
+      // Refresh the global active term config context so subsequent pages receive updated sem type/year instantly.
+      if (typeof refreshTerm === 'function') {
+        refreshTerm();
+      }
 
       if (res.data.failures && res.data.failures.length > 0) {
         showToast(`Results uploaded but enrollment failed for: ${res.data.failures.join(', ')}`, 'warning');

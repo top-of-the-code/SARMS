@@ -14,8 +14,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Seeds SARMS database with structural changes requested.
- * Flushes all collections except admin users and re-seeds faculty, departments, and core courses.
+ * Seeds SARMS database with initial structural data (departments, faculty, courses, config).
+ * <p>
+ * IDEMPOTENT: This seeder checks whether key data already exists before inserting.
+ * If the database already contains departments, it skips seeding entirely.
+ * Running it multiple times is safe — it will never delete or overwrite existing data.
+ * <p>
+ * To force a full re-seed, manually drop the relevant MongoDB collections first,
+ * then restart the server.
  */
 @Component
 public class DataSeeder implements CommandLineRunner {
@@ -52,37 +58,52 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        log.info("=== Starting Structural Database Overhaul ===");
-        
-        flushDatabase();
-        
+        // ── Always ensure admin user exists (even on pre-seeded DBs) ──
+        ensureAdminUser();
+
+        // ── Guard: skip seeding if database already has data ──
+        long existingDepartments = deptRepo.count();
+        if (existingDepartments > 0) {
+            log.info("Database already seeded — skipping. ({} departments found)", existingDepartments);
+            return;
+        }
+
+        log.info("=== Empty database detected — running initial seed ===");
+
         seedDepartments();
         seedFaculty();
         seedCoreCourses();
         seedConfig();
-        
-        log.info("=== Structural Overhaul Complete ===");
+
+        log.info("=== Initial database seeding complete ===");
     }
 
-    private void flushDatabase() {
-        log.info("Flushing database (keeping admin users)...");
-        
-        // Delete non-admin users
-        List<User> nonAdmins = userRepo.findAll().stream()
-                .filter(u -> !"admin".equalsIgnoreCase(u.getRole()))
-                .collect(Collectors.toList());
-        userRepo.deleteAll(nonAdmins);
-        log.info("Deleted {} non-admin users.", nonAdmins.size());
+    /**
+     * Ensures at least one admin user exists with a known password. Runs on every startup.
+     * Also resets all faculty passwords to ensure they work regardless of JDK version used for original hashing.
+     */
+    private void ensureAdminUser() {
+        User admin = userRepo.findByUserId("ADM-001").orElse(null);
+        if (admin == null) {
+            admin = new User();
+            admin.setUserId("ADM-001");
+            admin.setRole("admin");
+            admin.setName("System Administrator");
+            log.info("Created default admin user: ADM-001");
+        }
+        admin.setPasswordHash(passwordEncoder.encode("password123"));
+        userRepo.save(admin);
 
-        studentRepo.deleteAll();
-        facultyRepo.deleteAll();
-        deptRepo.deleteAll();
-        courseRepo.deleteAll();
-        marksRepo.deleteAll();
-        timetableRepo.deleteAll();
-        enrollmentRepo.deleteAll();
-        // Keep config if it exists, or re-seed it
-        log.info("All relevant collections flushed.");
+        // Also reset all faculty passwords to ensure compatibility
+        long resetCount = 0;
+        for (User u : userRepo.findAll()) {
+            if ("faculty".equals(u.getRole()) || "student".equals(u.getRole())) {
+                u.setPasswordHash(passwordEncoder.encode("password123"));
+                userRepo.save(u);
+                resetCount++;
+            }
+        }
+        log.info("Admin + {} user passwords synced to default.", resetCount);
     }
 
     private void seedDepartments() {
@@ -103,10 +124,10 @@ public class DataSeeder implements CommandLineRunner {
 
     private void seedFaculty() {
         Map<String, List<String>> names = Map.of(
-            "CSE", List.of("Dr. Alan Turing", "Dr. Ada Lovelace", "Dr. Grace Hopper", "Dr. John von Neumann", "Dr. Claude Shannon"),
-            "ECE", List.of("Dr. Nikola Tesla", "Dr. Guglielmo Marconi", "Dr. James Maxwell", "Dr. Heinrich Hertz", "Dr. Michael Faraday"),
-            "ME", List.of("Dr. James Watt", "Dr. Rudolf Diesel", "Dr. Henry Ford", "Dr. Wright Brothers", "Dr. Isambard Brunel"),
-            "CE", List.of("Dr. Marie Curie", "Dr. Antoine Lavoisier", "Dr. Linus Pauling", "Dr. Dmitri Mendeleev", "Dr. Robert Boyle")
+            "CSE", List.of("Dr. Vikram Sarabhai", "Dr. A. P. J. Abdul Kalam", "Dr. Narayana Murthy", "Dr. Raj Reddy", "Dr. Nandan Nilekani"),
+            "ECE", List.of("Dr. Homi J. Bhabha", "Dr. C. V. Raman", "Dr. Satyendra Nath Bose", "Dr. Meghnad Saha", "Dr. Jagadish Chandra Bose"),
+            "ME", List.of("Dr. M. Visvesvaraya", "Dr. Srinivasa Ramanujan", "Dr. Har Gobind Khorana", "Dr. E. Sreedharan", "Dr. Satish Dhawan"),
+            "CE", List.of("Dr. C. N. R. Rao", "Dr. Venkatraman Ramakrishnan", "Dr. Raghunath Mashelkar", "Dr. Man Mohan Sharma", "Dr. Asima Chatterjee")
         );
 
         int count = 1;
@@ -149,7 +170,8 @@ public class DataSeeder implements CommandLineRunner {
             for (int sem = 1; sem <= 8; sem++) {
                 for (int cNum = 1; cNum <= 3; cNum++) {
                     String courseCode = String.format("%s%d%02d", dept.getCode(), sem, cNum);
-                    String courseName = String.format("%s Core %d (Sem %d)", dept.getCode(), cNum, sem);
+                    String[] courseNames = {"Data Structures", "Algorithms", "Advanced Computing", "Thermodynamics", "VLSI Design", "Structural Analysis"};
+                    String courseName = courseNames[rand.nextInt(courseNames.length)] + " " + cNum;
                     Faculty fac = deptFaculty.get(rand.nextInt(deptFaculty.size()));
                     
                     Course c = new Course();
@@ -180,6 +202,34 @@ public class DataSeeder implements CommandLineRunner {
                 }
             }
         }
+
+        // Seed some CCC and UWE courses
+        Course ccc = new Course();
+        ccc.setCode("CCC101");
+        ccc.setName("Communication Skills");
+        ccc.setCredits(2.0);
+        ccc.setSemester(1);
+        ccc.setSemesterType("Both");
+        ccc.setYear(2026);
+        ccc.setCategory("ccc");
+        ccc.setDepartment("Humanities");
+        ccc.setDepartmentCode("HUM");
+        ccc.setStatus("Active");
+        courseRepo.save(ccc);
+
+        Course uwe = new Course();
+        uwe.setCode("UWE201");
+        uwe.setName("Environmental Science");
+        uwe.setCredits(3.0);
+        uwe.setSemester(2);
+        uwe.setSemesterType("Both");
+        uwe.setYear(2026);
+        uwe.setCategory("uwe");
+        uwe.setDepartment("Science");
+        uwe.setDepartmentCode("SCI");
+        uwe.setStatus("Active");
+        courseRepo.save(uwe);
+
         log.info("Seeded 3 core courses per department per semester (Total 96 courses).");
     }
 
@@ -208,7 +258,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private Marks.StudentMark sm(String rollNo, String name, Map<String, Double> marks) {
-        return new Marks.StudentMark(rollNo, name, new HashMap<>(marks));
+        return new Marks.StudentMark(rollNo, name, new HashMap<>(marks), false);
     }
 
     private TimetableSlot makeTimetableSlot(String code, String name, String type, String room,

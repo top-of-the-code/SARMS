@@ -22,4 +22,15 @@ public class ConfigController {
                 .map(c -> ResponseEntity.ok((Object) c))
                 .orElse(ResponseEntity.status(404).body(Map.of("error", "Config not found: " + key)));
     }
+
+    @PutMapping("/{key}")
+    public ResponseEntity<?> updateByKey(@PathVariable String key, @RequestBody Map<String, Object> value) {
+        return appConfigRepository.findByKey(key)
+                .map(c -> {
+                    c.setValue(value);
+                    appConfigRepository.save(c);
+                    return ResponseEntity.ok((Object) c);
+                })
+                .orElse(ResponseEntity.status(404).body(Map.of("error", "Config not found: " + key)));
+    }
 }

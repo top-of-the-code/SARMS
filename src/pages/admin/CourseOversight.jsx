@@ -4,7 +4,11 @@ import { departments } from '../../data/departments';
 import { currentSemester } from '../../data/config';
 import Modal from '../../components/Modal';
 import { useShowToast } from '../../components/Layout';
-import { Plus, Edit2, Power, Search, Filter } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { useTermConfig } from '../../context/TermConfigContext';
+import { Plus, Edit2, Power, Search, Filter, BookMarked, Calendar, AlertTriangle, Loader2 } from 'lucide-react';
+
+const YEAR_OPTIONS = Array.from({ length: 14 }, (_, i) => 2020 + i);
 
 const STATUS_BADGE = {
   'Active': 'bg-emerald-100 text-emerald-700',
@@ -18,6 +22,7 @@ const EMPTY_FORM = {
   codeNum: '', 
   name: '', 
   credits: 4, 
+  semester: currentSemester.number,
   semesterType: currentSemester.type, 
   year: currentSemester.year,
   facultyId: 'FAC-001', 
@@ -28,9 +33,13 @@ const EMPTY_FORM = {
 
 export default function CourseOversight() {
   const showToast = useShowToast();
+  const { currentUser } = useAuth();
+  const { termConfig, mergeTermFromServer } = useTermConfig();
   const [courses, setCourses] = useState([]);
   const [facultyList, setFacultyList] = useState([]);
-  
+
+  const activeSemInfo = termConfig || { type: 'Spring', year: 2026, number: currentSemester.number };
+
   useEffect(() => {
     Promise.all([api.get('/courses'), api.get('/faculty')])
       .then(([courseRes, facRes]) => {
@@ -39,14 +48,14 @@ export default function CourseOversight() {
       })
       .catch(err => showToast(err.response?.data?.error || 'Failed to load data', 'error'));
   }, []);
-  
+
   // Filters
   const [search, setSearch]   = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   
   // Sort
-  const [sortDesc, setSortDesc] = useState(true);
+  const [sortDesc, setSortDesc] = useState(false);
 
   // Modal State
   const [modalMode, setModalMode] = useState(null); // 'create' | 'edit'
@@ -68,20 +77,24 @@ export default function CourseOversight() {
     if (typeFilter) {
       raw = raw.filter(c => c.semesterType === typeFilter);
     }
-    // Sort by descending year, then semester type
+    // Sort by Course Code ascending by default
     raw.sort((a,b) => {
-      if (a.year !== b.year) {
-         return sortDesc ? (b.year || 0) - (a.year || 0) : (a.year || 0) - (b.year || 0);
-      }
-      return sortDesc ? (b.semesterType || '').localeCompare(a.semesterType || '') : (a.semesterType || '').localeCompare(b.semesterType || '');
+      const codeA = a.code || '';
+      const codeB = b.code || '';
+      return sortDesc ? codeB.localeCompare(codeA) : codeA.localeCompare(codeB);
     });
     return raw;
   }, [courses, search, yearFilter, typeFilter, sortDesc]);
 
 
-  function openCreate() { 
-    setFormData(EMPTY_FORM); 
-    setModalMode('create'); 
+  function openCreate() {
+    setFormData({
+      ...EMPTY_FORM,
+      semester: activeSemInfo.number ?? currentSemester.number,
+      semesterType: activeSemInfo.type,
+      year: activeSemInfo.year,
+    });
+    setModalMode('create');
   }
 
   function openEdit(course) {
@@ -93,8 +106,9 @@ export default function CourseOversight() {
       codeNum: numPart,
       name: course.name,
       credits: course.credits,
-      semesterType: course.semesterType || currentSemester.type,
-      year: course.year || currentSemester.year,
+      semester: course.semester || activeSemInfo.number,
+      semesterType: course.semesterType || activeSemInfo.type,
+      year: course.year || activeSemInfo.year,
       facultyId: course.facultyId || '',
       type: course.category || course.type || 'core',
       departmentCode: course.departmentCode || 'CSC',
@@ -104,7 +118,7 @@ export default function CourseOversight() {
   }
 
   async function handleSave() {
-    const faculty = facultyList.find(f => f.id === formData.facultyId);
+    const faculty = facultyList.find(f => f.facultyId === formData.facultyId);
     const finalCode = `${formData.departmentCode}${formData.codeNum}`;
     
     if (modalMode === 'create') {
@@ -168,15 +182,26 @@ export default function CourseOversight() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+      <div className="flex items-start justify-between mb-8 flex-wrap gap-4">
         <div>
           <h2 className="text-3xl font-extrabold text-navy">Course Management</h2>
-          <p className="text-sm font-medium text-gray-500 mt-2">Manage all university courses, assignments, and statuses.</p>
+          <p className="text-sm font-medium text-gray-500 mt-2 mb-3">Manage all university courses, assignments, and statuses.</p>
+          
+          <div className="inline-flex flex-wrap items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm">
+            <BookMarked className="w-3.5 h-3.5 text-gold" />
+            <span>Current Term: {activeSemInfo.type} {activeSemInfo.year}</span>
+            <span className="text-gray-300">|</span>
+            <span>Semester index: {activeSemInfo.number ?? '—'}</span>
+            <span className="text-gray-300">|</span>
+            <span>Active course semesters: {activeSemInfo.type === 'Spring' ? '2, 4, 6, 8' : '1, 3, 5, 7'}</span>
+          </div>
         </div>
         <button onClick={openCreate} className="flex items-center gap-2 px-6 py-3 bg-navy text-white text-sm font-bold rounded-xl hover:bg-navy-light transition-all shadow-md hover:-translate-y-0.5 focus:ring-4 focus:ring-navy/20">
           <Plus className="w-5 h-5" /> Create New Course
         </button>
       </div>
+
+
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
@@ -217,17 +242,17 @@ export default function CourseOversight() {
           <table className="w-full text-sm whitespace-nowrap text-left border-collapse">
             <thead className="bg-navy text-white">
               <tr>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Course Code</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Course Name</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Department</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Credits</th>
                 <th 
                   className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center cursor-pointer hover:bg-navy-light transition-colors"
                   onClick={() => setSortDesc(!sortDesc)}
-                  title="Sort by Year/Sem"
+                  title="Sort by Course Code"
                 >
-                  Year {sortDesc ? '↓' : '↑'}
+                  Course Code {sortDesc ? '↓' : '↑'}
                 </th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Course Name</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Department</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Credits</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Sem No.</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Term</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Assigned Faculty</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center">Category</th>
@@ -246,7 +271,9 @@ export default function CourseOversight() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center font-semibold text-gray-600">{c.credits}</td>
-                  <td className="px-6 py-4 text-center font-bold text-gray-800 bg-gray-50">{c.year}</td>
+                  <td className="px-6 py-4 text-center font-bold text-gray-800 bg-gray-50">
+                    {['ccc', 'uwe'].includes(c.category || c.type) ? <span className="text-gray-400 font-bold text-[10px] uppercase">Any</span> : c.semester}
+                  </td>
                   <td className="px-6 py-4 text-center font-medium text-navy">{c.semesterType}</td>
                   <td className="px-6 py-4 text-gray-700 font-medium">{c.facultyName}</td>
                   <td className="px-6 py-4 text-center">
@@ -347,6 +374,14 @@ export default function CourseOversight() {
                <input type="number" min={2020} max={2030} value={formData.year} onChange={e => handleField('year', Number(e.target.value))}
                  className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy transition-all text-center" />
              </div>
+
+             { !['ccc', 'uwe'].includes(formData.type) && (
+                 <div>
+                   <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Semester Number</label>
+                   <input type="number" min={1} max={8} value={formData.semester} onChange={e => handleField('semester', Number(e.target.value))}
+                     className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy transition-all text-center" />
+                 </div>
+              )}
              
              <div className="col-span-2 md:col-span-1">
                <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Semester Type</label>
@@ -354,7 +389,7 @@ export default function CourseOversight() {
                  className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy bg-white">
                  <option value="Spring">Spring</option>
                  <option value="Monsoon">Monsoon</option>
-                 <option value="Autumn">Autumn</option>
+                 <option value="Both">Both</option>
                </select>
              </div>
              
@@ -374,7 +409,7 @@ export default function CourseOversight() {
                  <select value={formData.facultyId} onChange={e => handleField('facultyId', e.target.value)}
                    className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold font-bold text-navy bg-white">
                    <option value="">-- Unassigned --</option>
-                   {facultyList.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                   {facultyList.map(f => <option key={f.id} value={f.facultyId}>{f.name}</option>)}
                  </select>
              </div>
           </div>
@@ -392,6 +427,8 @@ export default function CourseOversight() {
       >
         <p className="text-sm font-medium text-gray-700">Are you sure you want to change the status of this course?</p>
       </Modal>
+
+
     </div>
   );
 }

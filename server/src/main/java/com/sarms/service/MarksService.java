@@ -30,9 +30,6 @@ public class MarksService {
 
     public Marks updateStudentMarks(String courseCode, List<Marks.StudentMark> studentMarks) {
         Marks marks = getByCourseCode(courseCode);
-        if (!marks.isActiveSemester()) {
-            throw new RuntimeException("Cannot edit - semester is locked");
-        }
         marks.setStudentMarks(studentMarks);
         return marksRepository.save(marks);
     }
@@ -53,8 +50,27 @@ public class MarksService {
     public static double calcWeightedTotal(Map<String, Double> marks, List<Course.GradingComponent> components) {
         double total = 0;
         for (Course.GradingComponent comp : components) {
-            Double scored = marks.getOrDefault(comp.getId(), 0.0);
-            total += (scored / comp.getWeight()) * comp.getWeight(); // scored is raw out of weight
+            java.util.regex.Matcher match = java.util.regex.Pattern.compile("Best (\\d+) of (\\d+)").matcher(comp.getName() == null ? "" : comp.getName());
+            if (match.find()) {
+                int n = Integer.parseInt(match.group(1));
+                int m = Integer.parseInt(match.group(2));
+                List<Double> scores = new ArrayList<>();
+                for (int i = 0; i < m; i++) {
+                    String subId = comp.getId() + "_" + i;
+                    if (marks.containsKey(subId) && marks.get(subId) != null) {
+                        scores.add(marks.get(subId));
+                    }
+                }
+                scores.sort(java.util.Collections.reverseOrder());
+                double compTotal = 0;
+                for (int i = 0; i < Math.min(n, scores.size()); i++) {
+                    compTotal += scores.get(i);
+                }
+                total += Math.min(compTotal, comp.getWeight());
+            } else {
+                Double scored = marks.getOrDefault(comp.getId(), 0.0);
+                total += Math.min(scored, comp.getWeight());
+            }
         }
         return Math.round(total * 10.0) / 10.0;
     }
@@ -106,5 +122,17 @@ public class MarksService {
         }
 
         marksRepository.save(marks);
+    }
+
+    public void removeStudentFromCourseRoster(String courseCode, String rollNo) {
+        if (courseCode == null || rollNo == null) {
+            return;
+        }
+        marksRepository.findByCourseCode(courseCode).ifPresent(marks -> {
+            boolean removed = marks.getStudentMarks().removeIf(sm -> rollNo.equals(sm.getRollNo()));
+            if (removed) {
+                marksRepository.save(marks);
+            }
+        });
     }
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useTermConfig } from '../../context/TermConfigContext';
 import api from '../../services/api';
 import Modal from '../../components/Modal';
 import { useShowToast } from '../../components/Layout';
@@ -7,12 +8,14 @@ import { BookMarked, Users, Edit2, Trash2 } from 'lucide-react';
 
 export default function CourseManagement() {
   const { currentUser } = useAuth();
+  const { termConfig } = useTermConfig();
   const showToast = useShowToast();
 
   const [localCourses, setLocalCourses] = useState([]);
   const [editCourse, setEditCourse]     = useState(null); 
   const [formData, setFormData]         = useState({});
   const [newTopic, setNewTopic]         = useState('');
+  const activeSemInfo = termConfig || { type: 'Spring', year: 2026 };
 
   useEffect(() => {
     api.get(`/courses?facultyId=${currentUser.id}`)
@@ -96,13 +99,23 @@ export default function CourseManagement() {
     setFormData(d => ({ ...d, graded: { ...d.graded, [key]: nestedObj } }));
   }
 
-  const bySemester = localCourses.reduce((acc, c) => {
-    acc[c.semester] = acc[c.semester] || [];
-    acc[c.semester].push(c);
+  // Change 10: Show all courses. Mark inactive ones based on active term.
+  const coursesWithStatus = localCourses.map(c => {
+    let isActiveTerm = false;
+    if (activeSemInfo.type === 'Spring') isActiveTerm = c.semester % 2 === 0;
+    else if (activeSemInfo.type === 'Monsoon') isActiveTerm = c.semester % 2 !== 0;
+    else isActiveTerm = true;
+    return { ...c, isActiveTerm };
+  });
+
+  // Change 5: Group CCC and UWE into 'Semester-Agnostic'
+  const bySemester = coursesWithStatus.reduce((acc, c) => {
+    const isAgnostic = ['ccc', 'uwe'].includes(c.category);
+    const key = isAgnostic ? 'Agnostic' : c.semester;
+    acc[key] = acc[key] || [];
+    acc[key].push(c);
     return acc;
   }, {});
-
-  const course = localCourses.find(c => c.code === editCourse);
 
   // Calculate Running Total
   let totalPerc = 0;
@@ -117,94 +130,100 @@ export default function CourseManagement() {
     if (g.endsem.enabled) totalPerc += Number(g.endsem.weight || 0);
   }
   const isTotalValid = totalPerc === 100;
+  
+  let validComponents = true;
+  let componentError = '';
+  
+  if (formData.graded?.quiz?.enabled) {
+     if (Number(formData.graded.quiz.n) > Number(formData.graded.quiz.m)) { validComponents = false; componentError = 'Quiz: Best count cannot exceed total count'; }
+  }
+  if (formData.graded?.assignment?.enabled) {
+     if (Number(formData.graded.assignment.n) > Number(formData.graded.assignment.m)) { validComponents = false; componentError = 'Assignment: Best count cannot exceed total count'; }
+  }
+  if (formData.graded?.project?.enabled) {
+     if (formData.graded.project.parts.some(p => !p.name || !p.name.trim())) { validComponents = false; componentError = 'Project: Component names cannot be empty'; }
+  }
+
+  // Basic validation
+  const isValidForm = isTotalValid && validComponents &&
+                      formData.name?.trim().length > 0 && 
+                      formData.description?.trim().length > 0 && 
+                      formData.credits > 0;
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-navy">My Courses</h2>
-        <p className="text-sm font-medium text-gray-500 mt-1">
-          Manage your course details and syllabus
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-navy">My Courses</h2>
+          <p className="text-sm font-medium text-gray-500 mt-1">
+            Manage your course details and syllabus
+          </p>
+        </div>
+        
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 shadow-sm">
+          <BookMarked className="w-3.5 h-3.5 text-gold" />
+          <span>Current Term: {activeSemInfo.type} {activeSemInfo.year}</span>
+        </div>
       </div>
 
-      {Object.entries(bySemester).sort(([a],[b]) => Number(b)-Number(a)).map(([sem, courses]) => (
-        <div key={sem} className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <BookMarked className="w-5 h-5 text-gold" />
-            <h3 className="text-lg font-bold text-navy">Semester {sem}</h3>
-            {courses.some(c=>c.activeSemester) && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 ml-2 shadow-sm">Current</span>
-            )}
-          </div>
-          
-          <div className="grid gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {courses.map(c => (
-              <div key={c.code} className="bg-white rounded-xl shadow-md border-t-4 border-t-gold p-6 flex flex-col gap-4 relative">
-                
-                {/* Header elements */}
-                <div className="flex flex-col items-start gap-1">
-                  <div className="w-full flex justify-between items-center mb-1">
-                    <span className="text-sm font-bold text-gold uppercase tracking-wider">{c.code}</span>
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${c.activeSemester ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}`}>
-                      {c.activeSemester ? 'Active' : 'Past'}
-                    </span>
+      <div className="space-y-8">
+        {Object.keys(bySemester).sort().map(semKey => (
+          <div key={semKey} className="animate-fade-in">
+            <h3 className="text-xl font-black text-navy border-b-2 border-navy/10 pb-3 mb-5 flex items-center gap-3 w-max">
+              <span className="w-8 h-8 rounded-xl bg-gold/20 text-gold flex items-center justify-center text-sm font-black tracking-tighter shadow-sm">{semKey === 'Agnostic' ? '∞' : semKey}</span>
+              {semKey === 'Agnostic' ? 'Semester-Agnostic Courses (CCC/UWE)' : `Semester ${semKey}`}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {bySemester[semKey].map(c => (
+                <div key={c.code} className={`bg-white rounded-2xl shadow-card border-2 transition-all p-6 relative overflow-hidden group ${!c.isActiveTerm ? 'border-gray-200 opacity-60' : (c.status === 'Pending' ? 'border-amber-200 hover:border-amber-300' : 'border-gray-100 hover:border-gold hover:shadow-lg')}`}>
+                  {/* Status ribbon */}
+                  {c.status === 'Pending' && c.isActiveTerm && (
+                    <div className="absolute top-4 right-4 text-[10px] uppercase font-black bg-amber-100 text-amber-700 px-2 py-1 rounded shadow-sm">Setup Required</div>
+                  )}
+                  {!c.isActiveTerm && (
+                    <div className="absolute top-4 right-4 text-[10px] uppercase font-black bg-gray-200 text-gray-600 px-2 py-1 rounded shadow-sm">Inactive</div>
+                  )}
+
+                  <div className="flex items-start gap-4 mb-5">
+                    <div className="w-12 h-12 rounded-xl bg-navy/5 flex flex-col items-center justify-center shrink-0 shadow-sm border border-navy/10">
+                      <span className="text-xs font-black text-navy">{c.departmentCode}</span>
+                      <span className="text-[10px] font-bold text-gray-400">{c.code.replace(c.departmentCode, '')}</span>
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-navy text-lg leading-tight line-clamp-2" title={c.name}>{c.name}</h4>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">{c.department} <span className="mx-1">•</span> {c.credits} Cr</p>
+                    </div>
                   </div>
-                  <h4 className="text-xl font-extrabold text-gray-900 leading-tight">{c.name}</h4>
-                </div>
 
-                {/* Badges row */}
-                <div className="flex items-center gap-2 text-xs font-semibold">
-                   <span className="bg-navy/10 text-navy px-2.5 py-1 rounded-md">
-                     {c.semesterType || ''} {c.year}
-                   </span>
-                   <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md">
-                     {c.category ? c.category.toUpperCase() : c.type}
-                   </span>
-                   <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md flex items-center gap-1">
-                     <Users className="w-3.5 h-3.5" />
-                     {c.enrolled}
-                   </span>
-                </div>
+                  <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed font-medium mb-5 h-10 whitespace-pre-line">{c.description || 'No description provided.'}</p>
 
-                {/* Status for pending courses */}
-                {(!c.description || (c.gradedComponents && c.gradedComponents.length === 0)) && (
-                   <div className="bg-red-50 text-red-700 text-xs font-bold px-3 py-2 rounded-lg border border-red-200">
-                     Pending, Awaiting Course Details
-                   </div>
-                )}
-
-                {/* Description */}
-                <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                  {c.description}
-                </p>
-
-                {/* Syllabus Topics */}
-                <div className="mt-2 flex-grow">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">Syllabus Topics</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(c.syllabusTopics || []).map(t => (
-                      <span key={t} className="text-xs font-semibold px-2.5 py-1 bg-navy text-white rounded-full shadow-sm">
-                        {t}
-                      </span>
-                    ))}
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                      <div className="flex items-center gap-1.5 text-[10px] uppercase font-extrabold text-gray-400 mb-1">
+                        <Users className="w-3 h-3 text-gold" /> Enrolled
+                      </div>
+                      <p className="text-sm font-black text-navy">{c.enrolled || 0} Students</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                      <div className="flex items-center gap-1.5 text-[10px] uppercase font-extrabold text-gray-400 mb-1">
+                        <BookMarked className="w-3 h-3 text-gold" /> Components
+                      </div>
+                      <p className="text-sm font-black text-navy">{c.gradedComponents?.length || 0} Configured</p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Actions */}
-                <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
                   <button
                     onClick={() => openEdit(c)}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-gray-50 text-navy text-sm font-bold rounded-xl border border-gray-200 hover:bg-navy hover:text-white transition-all shadow-sm"
+                    disabled={!c.isActiveTerm}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 text-navy font-bold text-sm rounded-xl hover:bg-navy hover:text-white transition-all focus:ring-4 focus:ring-navy/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group-hover:bg-navy/5"
                   >
-                    <Edit2 className="w-4 h-4" />
-                    Edit Details
+                    <Edit2 className="w-4 h-4" /> Edit Details
                   </button>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}</div>
 
       {/* Edit Modal */}
       <Modal
@@ -216,7 +235,7 @@ export default function CourseManagement() {
           <div className="w-full flex flex-col sm:flex-row gap-3">
             <button 
                onClick={saveEdit} 
-               disabled={!isTotalValid}
+               disabled={!isValidForm}
                className="w-full sm:w-auto flex-1 px-5 py-3 bg-navy text-white text-sm font-bold rounded-xl hover:bg-navy-light transition-all shadow-md focus:ring-4 focus:ring-navy/20 disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"
             >
               Save Changes
@@ -253,12 +272,13 @@ export default function CourseManagement() {
           </div>
           
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wide text-gray-600 mb-2">Description</label>
-            <textarea
-              rows={3}
-              value={formData.description || ''}
+            <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Description</label>
+            <textarea 
+              value={formData.description || ''} 
               onChange={e => setFormData(d => ({ ...d, description: e.target.value }))}
-              className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-gold focus:ring-4 focus:ring-gold/20 font-medium text-navy transition-all resize-none"
+              placeholder="Enter full course description..."
+              rows={5}
+              className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-sm font-medium text-navy focus:outline-none focus:border-gold focus:ring-4 focus:ring-gold/20 transition-all resize-none shadow-inner"
             />
           </div>
           
@@ -294,13 +314,16 @@ export default function CourseManagement() {
 
           {/* Graded Components Section */}
           <div className="border-t-2 border-gray-100 pt-6 mt-6">
-             <div className="flex items-center justify-between mb-4">
+             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
                <div>
                  <h3 className="text-lg font-bold text-navy">Graded Components</h3>
                  <p className="text-xs text-gray-500 font-medium">Define continuous assessment and exams.</p>
                </div>
-               <div className={`px-4 py-2 rounded-xl text-sm font-bold border-2 ${isTotalValid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-300'}`}>
-                 Total: {totalPerc}% / 100%
+               <div className="flex flex-col items-end gap-1">
+                 {componentError && <span className="text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-md border border-red-200">{componentError}</span>}
+                 <div className={`px-4 py-2 rounded-xl text-sm font-bold border-2 ${isTotalValid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-300'}`}>
+                   Total: {totalPerc}% / 100%
+                 </div>
                </div>
              </div>
 

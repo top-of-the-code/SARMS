@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import api from '../../services/api';
 import { useShowToast } from '../../components/Layout';
+import { useTermConfig } from '../../context/TermConfigContext';
 import { CheckCircle, Copy, UserPlus, FileText, KeyRound } from 'lucide-react';
 
 const EMPTY_FORM = {
   fullName: '', fatherName: '', motherName: '', guardianPhone: '',
-  personalPhone: '', address: '', dob: '', program: 'BTech - CSE', batchYear: new Date().getFullYear(),
+  personalPhone: '', houseNo: '', street: '', city: '', state: '', pinCode: '', dob: '', program: 'BTech - CSE', batchYear: new Date().getFullYear(),
 };
 
 const PROGRAMS = [
@@ -17,6 +18,7 @@ const PROGRAMS = [
 
 export default function StudentRegistration() {
   const showToast = useShowToast();
+  const { termConfig } = useTermConfig();
   const [form, setForm]       = useState(EMPTY_FORM);
   const [errors, setErrors]   = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -25,6 +27,8 @@ export default function StudentRegistration() {
   const [copiedRole, setCopiedRole]   = useState(false);
   const [copiedPwd, setCopiedPwd]   = useState(false);
 
+  const activeSemLabel = termConfig ? `${termConfig.type} ${termConfig.year}` : '';
+
   function handleChange(key, val) {
     setForm(f => ({ ...f, [key]: val }));
     if (errors[key]) setErrors(e => ({ ...e, [key]: '' }));
@@ -32,13 +36,25 @@ export default function StudentRegistration() {
 
   function validate() {
     const errs = {};
-    if (!form.fullName.trim())       errs.fullName = 'Required';
-    if (!form.fatherName.trim())     errs.fatherName = 'Required';
-    if (!form.motherName.trim())     errs.motherName = 'Required';
-    if (!form.guardianPhone.trim())  errs.guardianPhone = 'Required';
-    if (!form.personalPhone.trim())  errs.personalPhone = 'Required';
-    if (!form.address.trim())        errs.address = 'Required';
-    if (!form.dob)                   errs.dob = 'Required';
+    const nameRegex = /^[A-Za-z\s]+$/;
+    const phoneRegex = /^\d{10}$/;
+
+    if (!form.fullName.trim() || !nameRegex.test(form.fullName))       errs.fullName = 'Valid name (letters only) required';
+    if (!form.fatherName.trim() || !nameRegex.test(form.fatherName))     errs.fatherName = 'Valid name (letters only) required';
+    if (!form.motherName.trim() || !nameRegex.test(form.motherName))     errs.motherName = 'Valid name (letters only) required';
+    if (!form.guardianPhone.trim() || !phoneRegex.test(form.guardianPhone))  errs.guardianPhone = 'Must be exactly 10 digits';
+    if (!form.personalPhone.trim() || !phoneRegex.test(form.personalPhone))  errs.personalPhone = 'Must be exactly 10 digits';
+    if (!form.city.trim()) errs.city = 'Required';
+    if (!form.state.trim()) errs.state = 'Required';
+    if (!form.pinCode.trim()) errs.pinCode = 'Required';
+    if (!form.dob) {
+       errs.dob = 'Required';
+    } else {
+       const d = new Date(form.dob);
+       const minDate = new Date('1900-01-01');
+       const today = new Date();
+       if (d > today || d < minDate) errs.dob = 'Must be a valid past date';
+    }
     if (!form.batchYear)             errs.batchYear = 'Required';
     return errs;
   }
@@ -152,6 +168,9 @@ export default function StudentRegistration() {
         <div>
           <h2 className="text-3xl font-extrabold text-navy">Student Registration</h2>
           <p className="text-sm font-medium text-gray-500 mt-1">Complete the two-column form below to seamlessly register a new student.</p>
+          {activeSemLabel && (
+             <p className="text-xs font-bold px-3 py-1 bg-gold/10 text-gold rounded-md mt-3 inline-block">Active Term: {activeSemLabel}</p>
+          )}
         </div>
       </div>
 
@@ -188,8 +207,28 @@ export default function StudentRegistration() {
               <input type="tel" placeholder="+91 98765 43210" value={form.guardianPhone} onChange={e => handleChange('guardianPhone', e.target.value)} className={inputCls(errors.guardianPhone)} />
             </FormField>
 
-            <FormField label="Residential Address" error={errors.address} fullWidth>
-              <textarea rows={3} placeholder="Full address" value={form.address} onChange={e => handleChange('address', e.target.value)} className={`${inputCls(errors.address)} resize-none`} />
+            <div className="col-span-1 md:col-span-2 mt-4 mb-2 border-b border-gray-100 pb-2 flex items-center justify-between">
+               <h3 className="text-lg font-extrabold text-navy">Residential Address</h3>
+            </div>
+            
+            <FormField label="House / Flat No." error={errors.houseNo}>
+              <input type="text" placeholder="e.g. Apt 4B" value={form.houseNo} onChange={e => handleChange('houseNo', e.target.value)} className={inputCls(errors.houseNo)} />
+            </FormField>
+            
+            <FormField label="Street / Area" error={errors.street}>
+              <input type="text" placeholder="e.g. Example Road" value={form.street} onChange={e => handleChange('street', e.target.value)} className={inputCls(errors.street)} />
+            </FormField>
+            
+            <FormField label="City" error={errors.city}>
+              <input type="text" placeholder="e.g. New Delhi" value={form.city} onChange={e => handleChange('city', e.target.value)} className={inputCls(errors.city)} />
+            </FormField>
+            
+            <FormField label="State" error={errors.state}>
+              <input type="text" placeholder="e.g. Delhi" value={form.state} onChange={e => handleChange('state', e.target.value)} className={inputCls(errors.state)} />
+            </FormField>
+            
+            <FormField label="PIN Code" error={errors.pinCode}>
+              <input type="text" placeholder="e.g. 110001" value={form.pinCode} onChange={e => handleChange('pinCode', e.target.value)} className={inputCls(errors.pinCode)} />
             </FormField>
 
             <div className="col-span-1 md:col-span-2 mt-4 mb-2 border-b border-gray-100 pb-2">
