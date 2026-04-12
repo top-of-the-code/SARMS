@@ -140,9 +140,32 @@ export const MARKS_DATA = {
 export function calcWeightedTotal(marks, components) {
   let total = 0;
   components.forEach(comp => {
-    // In this system, marks are entered directly out of the component's weight limit
-    const scored = marks[comp.id] ?? 0;
-    total += scored;
+    // Check if component name implies Best N of M
+    const match = comp.name?.match(/Best (\d+) of (\d+)/);
+    if (match) {
+      const N = parseInt(match[1], 10);
+      const M = parseInt(match[2], 10);
+      
+      const compScores = [];
+      for (let i = 0; i < M; i++) {
+        const val = marks[`${comp.id}_${i}`];
+        if (typeof val === 'number') {
+          compScores.push(val);
+        }
+      }
+      // Sort descending and take Best N
+      compScores.sort((a, b) => b - a);
+      const bestN = compScores.slice(0, N);
+      const scored = bestN.reduce((sum, s) => sum + s, 0);
+      
+      // Ensure the Best N score does not exceed the allowed max weight per component theoretically, 
+      // though typically the faculty enters numbers whose best N sum up to the weight.
+      total += Math.min(scored, comp.weight);
+    } else {
+      // Standard grading component
+      const scored = marks[comp.id] ?? 0;
+      total += Math.min(scored, comp.weight);
+    }
   });
   return Math.round(total * 10) / 10;
 }

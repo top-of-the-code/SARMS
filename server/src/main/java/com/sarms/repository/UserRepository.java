@@ -8,4 +8,5 @@ public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByUserId(String userId);
     boolean existsByUserId(String userId);
     long countByRoleAndUserIdStartingWith(String role, String prefix);
+    void deleteByRole(String role);
 }

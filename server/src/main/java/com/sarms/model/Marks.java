@@ -38,5 +38,6 @@ public class Marks {
         private String rollNo;
         private String name;
         private Map<String, Double> marks;  // { "comp1": 18.0, "comp2": 9.0, ... }
+        private boolean locked;
     }
 }

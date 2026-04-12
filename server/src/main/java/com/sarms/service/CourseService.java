@@ -1,8 +1,10 @@
 package com.sarms.service;
 
+import com.sarms.model.AppConfig;
 import com.sarms.model.Course;
 import com.sarms.model.Marks;
 import com.sarms.model.Student;
+import com.sarms.repository.AppConfigRepository;
 import com.sarms.repository.CourseRepository;
 import com.sarms.repository.MarksRepository;
 import com.sarms.repository.StudentRepository;
@@ -20,15 +22,18 @@ public class CourseService {
     private final MarksRepository marksRepository;
     private final StudentRepository studentRepository;
     private final MarksService marksService;
+    private final AppConfigRepository appConfigRepository;
 
     public CourseService(CourseRepository courseRepository,
                          MarksRepository marksRepository,
                          StudentRepository studentRepository,
-                         MarksService marksService) {
+                         MarksService marksService,
+                         AppConfigRepository appConfigRepository) {
         this.courseRepository = courseRepository;
         this.marksRepository = marksRepository;
         this.studentRepository = studentRepository;
         this.marksService = marksService;
+        this.appConfigRepository = appConfigRepository;
     }
 
     public List<Course> getAllCourses() {
@@ -48,10 +53,43 @@ public class CourseService {
         return courseRepository.findByFacultyId(facultyId);
     }
 
+    private void validateSemesterRules(Course course) {
+        if (course.getSemesterType() == null || (!course.getSemesterType().equals("Spring") && !course.getSemesterType().equals("Monsoon") && !course.getSemesterType().equals("Both"))) {
+            throw new RuntimeException("Invalid semester type. Must be Spring, Monsoon, or Both.");
+        }
+        if (!"ccc".equalsIgnoreCase(course.getCategory()) && !"uwe".equalsIgnoreCase(course.getCategory())) {
+            if ("Monsoon".equals(course.getSemesterType()) && course.getSemester() % 2 == 0) {
+                throw new RuntimeException("Monsoon courses can only be offered in odd semesters.");
+            }
+            if ("Spring".equals(course.getSemesterType()) && course.getSemester() % 2 != 0) {
+                throw new RuntimeException("Spring courses can only be offered in even semesters.");
+            }
+        }
+    }
+
+    private void validateGradedComponents(List<Course.GradingComponent> components) {
+        if (components == null || components.isEmpty()) return;
+        int totalWeight = 0;
+        for (Course.GradingComponent gc : components) {
+            if (gc.getWeight() <= 0) throw new RuntimeException("Component weight must be a positive integer.");
+            if (gc.getName() == null || gc.getName().trim().isEmpty()) throw new RuntimeException("Component names cannot be empty.");
+            
+            if (gc.getName().matches("Best \\d+ of \\d+.*")) {
+                String[] parts = gc.getName().split(" ");
+                int n = Integer.parseInt(parts[1]);
+                int m = Integer.parseInt(parts[3]);
+                if (n > m) throw new RuntimeException("Best count cannot exceed total count.");
+            }
+            totalWeight += gc.getWeight();
+        }
+        if (totalWeight != 100) throw new RuntimeException("Total weightage must equal exactly 100%.");
+    }
+
     public Course createCourse(Course course) {
         if (courseRepository.existsByCode(course.getCode())) {
             throw new RuntimeException("Course code already exists: " + course.getCode());
         }
+        validateSemesterRules(course);
         course.setEnrolled(0);
         course.setResultsPublished(false);
         if (course.getStatus() == null) course.setStatus("Pending");
@@ -63,12 +101,18 @@ public class CourseService {
         if (updates.getName() != null) course.setName(updates.getName());
         if (updates.getDescription() != null) course.setDescription(updates.getDescription());
         if (updates.getSyllabusTopics() != null) course.setSyllabusTopics(updates.getSyllabusTopics());
-        if (updates.getGradedComponents() != null) course.setGradedComponents(updates.getGradedComponents());
+        if (updates.getGradedComponents() != null) {
+            validateGradedComponents(updates.getGradedComponents());
+            course.setGradedComponents(updates.getGradedComponents());
+        }
         if (updates.getCredits() > 0) course.setCredits(updates.getCredits());
         if (updates.getFacultyId() != null) {
             course.setFacultyId(updates.getFacultyId());
             course.setFacultyName(updates.getFacultyName());
         }
+        if (updates.getSemesterType() != null) course.setSemesterType(updates.getSemesterType());
+        if (updates.getSemester() > 0) course.setSemester(updates.getSemester());
+        validateSemesterRules(course);
         return courseRepository.save(course);
     }
 
@@ -137,7 +181,16 @@ public class CourseService {
             int publishedSemester = entry.getValue();
             int nextSemester = publishedSemester + 1;
 
-            if (nextSemester > 8) continue; // No promotion beyond semester 8
+            if (nextSemester > 8) {
+                // Mark student as inactive (graduated) instead of promoting to semester 9
+                Student student = studentRepository.findByRollNo(rollNo).orElse(null);
+                if (student != null && student.isActive()) {
+                    student.setActive(false);
+                    studentRepository.save(student);
+                    log.info("Marked student {} as inactive (graduated) after semester 8", rollNo);
+                }
+                continue;
+            }
 
             Student student = studentRepository.findByRollNo(rollNo).orElse(null);
             if (student == null) continue;
@@ -212,6 +265,7 @@ public class CourseService {
             try {
                 int currentSem = student.getCurrentSemester();
                 if (currentSem < 1 || currentSem > 8) continue;
+                if (!student.isActive()) continue;
 
                 // --- Step 1: Finalize grades for currentSemester ---
                 Student.SemesterRecord semRecord = student.getAcademicRecord().stream()
@@ -234,6 +288,8 @@ public class CourseService {
                                             sm.getMarks(), marks.getGradingComponents());
                                     cg.setGrade(MarksService.getGradeLetter(totalPercent));
                                     cg.setGradePoints(MarksService.getGradePoints(cg.getGrade()));
+                                    sm.setLocked(true);
+                                    marksRepository.save(marks);
                                 } else {
                                     // No marks entered — default to F
                                     cg.setGrade("F");
@@ -258,25 +314,16 @@ public class CourseService {
                             ? Math.round((totalWeighted / totalCredits) * 100.0) / 100.0 : 0);
                 }
 
-                // --- Step 2: Lock courses for this semester ---
-                if (semRecord != null) {
-                    for (Student.CourseGrade cg : semRecord.getCourses()) {
-                        Course course = courseRepository.findByCode(cg.getCourseCode()).orElse(null);
-                        if (course != null && !course.isResultsPublished()) {
-                            course.setResultsPublished(true);
-                            course.setActiveSemester(false);
-                            courseRepository.save(course);
-                        }
-                    }
-                }
+                // --- Step 2: Lock courses for this semester (REMOVED) ---
+                // We no longer lock the Course model because locking is enforced exclusively at the student row level.
 
                 // --- Step 3: Promote or Graduate ---
                 if (currentSem >= 8) {
-                    // Graduate: mark student as graduated
-                    student.setCurrentSemester(9); // 9 = graduated sentinel
+                    // Graduate: mark student as inactive, keep semester at 8
+                    student.setActive(false);
                     studentRepository.save(student);
                     graduated++;
-                    log.info("Graduated student {}", student.getRollNo());
+                    log.info("Graduated student {} (marked inactive)", student.getRollNo());
                 } else {
                     int nextSem = currentSem + 1;
                     student.setCurrentSemester(nextSem);
@@ -331,6 +378,32 @@ public class CourseService {
             }
         }
 
+        // --- Step 4: Toggle Active Term ---
+        try {
+            AppConfig currentSemesterConfig = appConfigRepository.findByKey("currentSemester").orElse(null);
+            if (currentSemesterConfig != null && currentSemesterConfig.getValue() instanceof Map) {
+                Map<String, Object> valMap = new HashMap<>((Map<String, Object>) currentSemesterConfig.getValue());
+                String type = (String) valMap.get("type");
+                int year = ((Number) valMap.getOrDefault("year", 2026)).intValue();
+                
+                if ("Spring".equalsIgnoreCase(type)) {
+                    valMap.put("type", "Monsoon");
+                } else if ("Monsoon".equalsIgnoreCase(type)) {
+                    valMap.put("type", "Spring");
+                    valMap.put("year", year + 1);
+                }
+                
+                int currentNum = ((Number) valMap.getOrDefault("number", 1)).intValue();
+                valMap.put("number", currentNum + 1);
+
+                currentSemesterConfig.setValue(valMap);
+                appConfigRepository.save(currentSemesterConfig);
+                log.info("Active Term automatically shifted to {} {}", valMap.get("type"), valMap.get("year"));
+            }
+        } catch (Exception e) {
+            log.error("Failed to automatically shift active term: {}", e.getMessage());
+        }
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("message", "Results uploaded successfully. All students have been promoted.");
         result.put("promoted", promoted);
@@ -346,6 +419,13 @@ public class CourseService {
     public void incrementEnrollment(String code) {
         Course course = getByCode(code);
         course.setEnrolled(course.getEnrolled() + 1);
+        courseRepository.save(course);
+    }
+
+    public void decrementEnrollment(String code) {
+        Course course = getByCode(code);
+        int next = course.getEnrolled() - 1;
+        course.setEnrolled(Math.max(0, next));
         courseRepository.save(course);
     }
 }
