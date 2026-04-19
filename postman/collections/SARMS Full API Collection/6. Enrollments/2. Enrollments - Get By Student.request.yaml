@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{base_url}}/enrollments/student/{{studentRollNo}}"
+method: GET
+headers:
+  Content-Type: application/json
+auth:
+  type: bearer
+  credentials:
+    token: "{{token}}"
+scripts:
+  - type: afterResponse
+    code: pm.test("Status 200", function () { pm.response.to.have.status(200); });
+    language: text/javascript
+order: 2000

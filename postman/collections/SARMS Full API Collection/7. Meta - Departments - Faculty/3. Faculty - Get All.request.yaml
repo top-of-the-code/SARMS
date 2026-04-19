@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{base_url}}/faculty"
+method: GET
+headers:
+  Content-Type: application/json
+auth:
+  type: bearer
+  credentials:
+    token: "{{token}}"
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test("Status 200", function () { pm.response.to.have.status(200); });
+
+      var data = pm.response.json();
+
+      if(data.length > 0) { pm.environment.set("facultyId", data[0].facultyId);
+      }
+    language: text/javascript
+order: 3000

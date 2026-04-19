@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{base_url}}/marks/{{courseCode}}/components"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    [
+        {
+            "id": "comp1",
+            "name": "Assignments",
+            "weight": 30
+        },
+        {
+            "id": "comp2",
+            "name": "Final",
+            "weight": 70
+        }
+    ]
+auth:
+  type: bearer
+  credentials:
+    token: "{{token}}"
+scripts:
+  - type: afterResponse
+    code: pm.test("Status code 200 or 400 (if activeSemester=false)", function () {
+      pm.expect(pm.response.code).to.be.oneOf([200, 400]); });
+    language: text/javascript
+order: 2000
