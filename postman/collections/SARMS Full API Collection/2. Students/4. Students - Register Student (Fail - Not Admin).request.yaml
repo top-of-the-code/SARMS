@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{base_url}}/students/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+        "fullName": "Should Fail",
+        "batchYear": 2026,
+        "program": "BTech - CSE",
+        "dob": "2005-01-01"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{token}}"
+scripts:
+  - type: afterResponse
+    code: pm.test("Status code is 403 Forbidden", function () {
+      pm.response.to.have.status(403); });
+    language: text/javascript
+order: 4000

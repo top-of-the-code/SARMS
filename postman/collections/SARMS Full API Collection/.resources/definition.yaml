@@ -1,0 +1,12 @@
+$kind: collection
+description: Comprehensive testing collection for the SARMS Spring Boot Backend
+variables:
+  base_url: http://localhost:8080/api
+  adminUserId: ADMIN-001
+  adminPassword: password123
+  studentRollNo: STUD-2026-001
+  studentPassword: temp123
+  token: ""
+  adminToken: ""
+  courseCode: CSE401
+  facultyId: FAC-CSE-001

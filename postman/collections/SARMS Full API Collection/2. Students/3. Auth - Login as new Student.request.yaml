@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{base_url}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+        "userId": "{{studentRollNo}}",
+        "password": "{{studentPassword}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status 200", function () { pm.response.to.have.status(200); });
+      var jsonData = pm.response.json();
+      pm.environment.set("studentToken", jsonData.token);
+      pm.environment.set("token", jsonData.token);
+    language: text/javascript
+order: 3000

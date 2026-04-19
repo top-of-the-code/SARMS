@@ -1,0 +1,40 @@
+$kind: http-request
+url: "{{base_url}}/students/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+        "fullName": "Test Student",
+        "fatherName": "Mr. Test",
+        "motherName": "Mrs. Test",
+        "guardianPhone": "1234567890",
+        "personalPhone": "0987654321",
+        "address": "123 Test Ave",
+        "dob": "2005-01-01",
+        "batchYear": 2026,
+        "program": "BTech - CSE"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200); });
+
+      var jsonData = pm.response.json();
+
+      pm.test("Has rollNo", function () {
+      pm.expect(jsonData).to.have.property('rollNo'); });
+
+      if (jsonData.rollNo) {
+          pm.environment.set("studentRollNo", jsonData.rollNo);
+          pm.environment.set("studentPassword", jsonData.temporaryPassword);
+      }
+    language: text/javascript
+order: 2000

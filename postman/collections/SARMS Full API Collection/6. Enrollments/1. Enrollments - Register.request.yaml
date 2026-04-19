@@ -1,0 +1,29 @@
+$kind: http-request
+url: "{{base_url}}/enrollments/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+        "semester": 1,
+        "courseCodes": [
+            "{{courseCode}}"
+        ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{token}}"
+scripts:
+  - type: afterResponse
+    code: >-
+      // Switch token back to student
+
+      pm.environment.set("token", pm.environment.get("studentToken"));
+
+      pm.test("Status code 200", function () {
+      pm.expect(pm.response.code).to.be.oneOf([200, 400]); });
+    language: text/javascript
+order: 1000

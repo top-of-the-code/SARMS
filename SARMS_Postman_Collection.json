@@ -1,0 +1,1414 @@
+{
+  "info": {
+    "name": "SARMS Full API Collection",
+    "description": "Comprehensive testing collection for the SARMS Spring Boot Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "adminUserId",
+      "value": "ADM-001",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "password123",
+      "type": "string"
+    },
+    {
+      "key": "studentRollNo",
+      "value": "STUD-2025-004",
+      "type": "string"
+    },
+    {
+      "key": "studentPassword",
+      "value": "password123",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "courseCode",
+      "value": "CCC101",
+      "type": "string"
+    },
+    {
+      "key": "facultyId",
+      "value": "FAC-CSE-001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "1. Auth - Login Admin (Success)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{adminUserId}}\",\n    \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Response must be JSON\", function () { pm.response.to.be.json; });",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Response has token\", function () { pm.expect(jsonData).to.have.property('token'); });",
+                  "pm.test(\"Response has correct role\", function () { pm.expect(jsonData.role).to.eql(\"admin\"); });",
+                  "pm.environment.set(\"adminToken\", jsonData.token);",
+                  "pm.environment.set(\"token\", jsonData.token); // set default token to admin for now"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Auth - Login (Fail - Bad Credentials)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"invalid_user\",\n    \"password\": \"wrong_password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () { pm.response.to.have.status(401); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Returns error message\", function () { pm.expect(jsonData).to.have.property('error'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Auth - Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Has userId\", function () { pm.expect(jsonData).to.have.property('userId'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Auth - Me (Fail Unauthorized)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 or 403\", function () { pm.expect(pm.response.code).to.be.oneOf([401,403]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Auth - Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/forgot-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{studentRollNo}}\",\n    \"email\": \"student.jxhjqn@mrca.edu\",\n    \"newPassword\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function() { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Students",
+      "item": [
+        {
+          "name": "1. Students - Get All",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "students"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Response is array\", function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Students - Register Student (Admin Path)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"fullName\": \"Test Student\",\n    \"fatherName\": \"Mr Test\",\n    \"motherName\": \"Mrs Test\",\n    \"guardianPhone\": \"1234567890\",\n    \"personalPhone\": \"0987654321\",\n    \"houseNo\": \"123\",\n    \"street\": \"Test Ave\",\n    \"city\": \"Tech City\",\n    \"state\": \"State\",\n    \"pinCode\": \"123456\",\n    \"dob\": \"2005-01-01\",\n    \"batchYear\": 2026,\n    \"program\": \"BTech - CSE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Has rollNo\", function () { pm.expect(jsonData).to.have.property('rollNo'); });",
+                  "if (jsonData.rollNo) {",
+                  "    pm.environment.set(\"studentRollNo\", jsonData.rollNo);",
+                  "    pm.environment.set(\"studentPassword\", jsonData.temporaryPassword);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Auth - Login as new Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{studentRollNo}}\",\n    \"password\": \"{{studentPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"studentToken\", jsonData.token);",
+                  "pm.environment.set(\"token\", jsonData.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Students - Register Student (Fail - Not Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"fullName\": \"Should Fail\",\n    \"batchYear\": 2026,\n    \"program\": \"BTech - CSE\",\n    \"dob\": \"2005-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403 Forbidden\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Students - Get By RollNo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/{{studentRollNo}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "{{studentRollNo}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Students - Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/{{studentRollNo}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "{{studentRollNo}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"personalPhone\": \"555-555-5555\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Students - Enroll",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/{{studentRollNo}}/enroll",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "{{studentRollNo}}",
+                "enroll"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"semester\": 1,\n    \"courseCodes\": [\n        \"{{courseCode}}\"\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 or 400 (if invalid course)\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 400]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8. Students - Update Grades (Admin Only)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/students/{{studentRollNo}}/grades",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "{{studentRollNo}}",
+                "grades"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"semester\": 1,\n    \"courses\": [\n        {\n            \"courseCode\": \"{{courseCode}}\",\n            \"newGrade\": \"A\"\n        }\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Courses",
+      "item": [
+        {
+          "name": "1. Courses - Get All",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/courses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json();",
+                  "if(data.length > 0) { pm.environment.set(\"courseCode\", data[0].code); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Courses - Get Filtered (Semester)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/courses?semester=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses?semester=1"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Courses - Get By Code",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/courses/{{courseCode}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses",
+                "{{courseCode}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Courses - Toggle Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/courses/{{courseCode}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses",
+                "{{courseCode}}",
+                "status"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Courses - Publish Results",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/courses/publish",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses",
+                "publish"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"semesters\": [\n        1\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Marks",
+      "item": [
+        {
+          "name": "1. Marks - Get By Course",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/marks/{{courseCode}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "marks",
+                "{{courseCode}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Marks - Update Components",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/marks/{{courseCode}}/components",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "marks",
+                "{{courseCode}}",
+                "components"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n    {\n        \"id\": \"comp1\",\n        \"name\": \"Assignments\",\n        \"weight\": 30\n    },\n    {\n        \"id\": \"comp2\",\n        \"name\": \"Final\",\n        \"weight\": 70\n    }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code 200 or 400 (if activeSemester=false)\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 400]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Marks - Update Student Marks",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/marks/{{courseCode}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "marks",
+                "{{courseCode}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n    {\n        \"rollNo\": \"{{studentRollNo}}\",\n        \"name\": \"Test Student\",\n        \"marks\": {\n            \"comp1\": 25,\n            \"comp2\": 65\n        }\n    }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code 200 or 400\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 400]); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Admin",
+      "item": [
+        {
+          "name": "1. Admin - Upload Results Bulk",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/upload-results",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "upload-results"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{adminUserId}}\",\n    \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Admin - Upload Results (Fail - Wrong Pwd)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/upload-results",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "upload-results"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{adminUserId}}\",\n    \"password\": \"wrong\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code 401\", function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Enrollments",
+      "item": [
+        {
+          "name": "1. Enrollments - Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/enrollments/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "enrollments",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"semester\": 1,\n    \"courseCodes\": [\n        \"{{courseCode}}\"\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Switch token back to student",
+                  "pm.environment.set(\"token\", pm.environment.get(\"studentToken\"));",
+                  "pm.test(\"Status code 200\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 400]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Enrollments - Get By Student",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/enrollments/student/{{studentRollNo}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "enrollments",
+                "student",
+                "{{studentRollNo}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Meta / Departments / Faculty",
+      "item": [
+        {
+          "name": "1. Departments - Get All",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/departments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "departments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Config - Get Current Semester",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/config/currentSemester",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "config",
+                "currentSemester"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Faculty - Get All",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/faculty",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "faculty"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json();",
+                  "if(data.length > 0) { pm.environment.set(\"facultyId\", data[0].facultyId); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

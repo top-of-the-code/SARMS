@@ -1,0 +1,34 @@
+$kind: http-request
+url: "{{base_url}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+        "userId": "{{adminUserId}}",
+        "password": "{{adminPassword}}"
+    }
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200); });
+
+      pm.test("Response must be JSON", function () { pm.response.to.be.json; });
+
+      var jsonData = pm.response.json();
+
+      pm.test("Response has token", function () {
+      pm.expect(jsonData).to.have.property('token'); });
+
+      pm.test("Response has correct role", function () {
+      pm.expect(jsonData.role).to.eql("admin"); });
+
+      pm.environment.set("adminToken", jsonData.token);
+
+      pm.environment.set("token", jsonData.token); // set default token to admin
+      for now
+    language: text/javascript
+order: 1000
