@@ -13,7 +13,7 @@ export default defineConfig({
     trace: 'on-first-retry',
     /* This makes the browser visible and slow enough to follow */
     launchOptions: {
-      slowMo: 500,
+      slowMo: 1000,
     }
   },
 

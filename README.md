@@ -1,28 +1,39 @@
-# CompScience University ERP
+# SARMS: Student Academic Records Management System
 
-A complete **Full-Stack University ERP Web Application** featuring three distinct role-based portals (Student, Faculty, Admin). Build with **React + Tailwind CSS** on the frontend, and secured by a **Spring Boot + MongoDB** backend.
+SARMS is a comprehensive **Full-Stack University ERP Web Application** designed to streamline academic operations. It features three distinct role-based portals (Student, Faculty, Admin) and handles everything from course registration to bulk result publishing and graduation workflows.
+
+Built with **React + Tailwind CSS** on the frontend and a **Spring Boot + MongoDB** backend.
 
 ---
 
 ## 🚀 Getting Started
 
-To run the application locally, you will need to start both the frontend development server and the backend Spring Boot server.
+To run the application locally, you need to start both the backend Spring Boot server and the frontend Vite development server.
+
+### Prerequisites
+- **Java JDK 17** (Temurin is recommended)
+- **Node.js** (v18+)
+- **Chrome Browser** (for running Selenium tests)
 
 ### 1. Start the Backend Server
-Make sure you have Java 17+ installed. We use the wrapped local Maven to run the application.
+Navigate to the `server` directory and run the Spring Boot application using the bundled Maven:
 
-```cmd
-cd path/to/SARMS
+```bash
 cd server
-apache-maven-3.9.6\bin\mvn spring-boot:run
+# Ensure Java 17 is active
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
+export PATH="$JAVA_HOME/bin:$PATH"
+
+# Run the server
+./apache-maven-3.9.6/bin/mvn spring-boot:run
 ```
-The backend will run on `http://localhost:8080` and connect to the configured MongoDB Atlas cluster automatically. On its very first run, it will automatically seed the database with departments, users, courses, and timetables.
+The backend will run on `http://localhost:8080`. It automatically connects to the MongoDB Atlas cluster and seeds initial data on its first run.
 
 ### 2. Start the Frontend Server
-Open a new terminal window:
+Open a new terminal and run:
 
-```cmd
-cd path/to/SARMS
+```bash
+# From project root
 npm install
 npm run dev
 ```
@@ -30,17 +41,31 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
+## 🧪 Automated Testing
+
+SARMS includes a **Selenium-based automated test suite** to verify critical user flows like login and dashboard access.
+
+### Run tests:
+```bash
+cd server
+# Ensure Java 17 is active
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
+./apache-maven-3.9.6/bin/mvn test -Dtest=SarmsLoginTest
+```
+> [!NOTE]
+> Make sure the Frontend server is running at `http://localhost:5173` before executing the Selenium tests.
+
+---
+
 ## 🔐 Credentials & Authentication
 
-The application is secured with **JWT (JSON Web Tokens)**. When the backend first boots, it seeds the database with realistic demo accounts.
+The system uses **JWT (JSON Web Tokens)** for stateless authentication. Demo accounts are automatically seeded:
 
-| Role     | Example ID          | Password |
-|----------|---------------------|----------|
-| Student  | STUD-2026-001       | pass001  |
-| Faculty  | FAC-CSE-001         | fac001   |
-| Admin    | ADM-001             | adm001   |
-
-> The authentication system includes secure password hashing, role-based database queries, and a fully functional route-guard system on the React router. For critical operations (like bulk result publishing), the system requires **Double Authentication** where the admin must re-verify their credentials.
+| Role     | Username        | Password      |
+|----------|-----------------|---------------|
+| Admin    | `ADM-001`       | `password123` |
+| Faculty  | `FAC-ECE-001`   | `password123` |
+| Student  | `STUD-2026-001` | `password123` |
 
 ---
 
@@ -49,60 +74,32 @@ The application is secured with **JWT (JSON Web Tokens)**. When the backend firs
 ```
 SARMS/
 ├── server/                   # Spring Boot Backend
-│   ├── src/main/java/.../sarms/
-│   │   ├── config/           # Security & CORS Config
-│   │   ├── controller/       # REST API Endpoints (inc. AdminController for bulk ops)
-│   │   ├── model/            # MongoDB Document Entities (Student, Course, Marks, User)
-│   │   ├── repository/       # MongoRepositories
-│   │   ├── security/         # JWT Generation & Filter logic
-│   │   ├── service/          # Business Logic (Grading, Enrollment, Promotion)
-│   │   └── seed/             # Database initialization (DataSeeder)
-│   └── src/main/resources/
-│       └── application.properties # MongoDB URI, Port, JWT Secret
-│
+│   ├── src/main/java/        # Source code
+│   ├── src/test/java/        # Selenium Automation Tests
+│   ├── apache-maven-3.9.6/   # Bundled Maven binaries
+│   └── pom.xml               # Backend dependencies (Spring, Selenium, JWT)
 ├── src/                      # React Frontend
-│   ├── components/           # Reusable UI elements (Layout, Sidebar, Modal)
-│   ├── context/              # AuthContext (Handles JWT interceptors)
-│   ├── pages/
-│   │   ├── admin/            # Course/Student Management, Bulk Result Upload
-│   │   ├── faculty/          # Marks Entry, Course Syllabus Editor
-│   │   └── student/          # Registration, Academic Report, Timetable
-│   └── services/
-│       └── api.js            # Axios instance with Auto-JWT injection
-└── package.json
+│   ├── components/           # UI Design System
+│   ├── pages/                # Role-based dashboards
+│   └── services/             # API integration (Axios)
+├── public/                   # Static assets
+└── package.json              # Frontend dependencies
 ```
 
 ---
 
-## 🧩 Key System Features
+## 🧩 Key Features
 
-### Student Registration & Auto-Enrollment
-When a new student is registered, they are assigned to one of the 4 core BTech departments (**CSE, ECE, ME, CE**). By default, their `currentSemester` is set to **1**, and the system automatically enrolls them into the **Semester 1 Core Courses** corresponding to their department. The backend generates a sequential roll number (e.g., `STUD-2026-001`) and a temporary secure password.
-
-### Bulk Result Upload & Promotion
-The Admin Dashboard features a specialized **Upload Results** engine. This process is protected by **Double Authentication**, requiring a fresh credential check before execution. Once authorized, the backend orchestrator:
-1. **Finalizes Grades**: Locks all "In Progress" courses for every student's active semester and computes final letter grades (A+, A, B, etc.) and SGPA.
-2. **Promotes Students**: Increments the `currentSemester` for all non-graduating students.
-3. **Auto-Enrollment**: Automatically enrolls promoted students into all core courses for their **new semester** based on their department.
-4. **Graduation Flow**: Students completed semester 8 are automatically flagged as graduated.
-
-### Mathematics & Grade Publishing
-Faculty define custom assessment components (Midsem, Quizzes, Assignments). The system mathematically scales raw marks to 100% and maps them to standard grade points (10, 9, 8 etc.) based on predefined thresholds.
-
-### Timetable & Dashboards
-A dynamic grid-based GUI timetable displays lectures corresponding precisely to the logged-in user. Dashboards use `Recharts` to chart visual SGPA progression across multiple semesters.
+- **Automated Enrollment**: New students are auto-enrolled in core courses based on their department.
+- **Double Authentication**: Sensitive operations like "Bulk Publish Results" require a fresh login for security.
+- **Dynamic Grading**: Mathematical scaling of assessment components (Midsem, Finals, Quizzes) into SGPA/CGPA.
+- **Smart Promotion**: Automated semester promotion and graduation tracking.
 
 ---
 
 ## 🛠 Tech Stack
 
-### Frontend
-- **React 19** — Functional components + Hooks
-- **Tailwind CSS 3** — Utility-first design system with custom brand tokens (Navy `#0A1F44` & Gold `#C9A84C`)
-- **React Router v6** — Advanced nested routes and strict permission routing
-- **Axios** — HTTP requests and response interceptors
-
-### Backend
-- **Java 17 + Spring Boot 3** — RESTful API architecture
-- **Spring Security + JWT** — Stateless request authorization
-- **MongoDB Atlas + Spring Data Mongo** — NoSQL flexible data storage
+- **Frontend**: React 19, Tailwind CSS 3, Vite, React Router 6, Recharts.
+- **Backend**: Java 17, Spring Boot 3.2, Spring Security.
+- **Database**: MongoDB Atlas.
+- **Testing**: Selenium WebDriver, JUnit 5.
