@@ -2,45 +2,31 @@
 
 <br/>
 
-```
-███████╗ █████╗ ██████╗ ███╗   ███╗███████╗
-██╔════╝██╔══██╗██╔══██╗████╗ ████║██╔════╝
-███████╗███████║██████╔╝██╔████╔██║███████╗
-╚════██║██╔══██║██╔══██╗██║╚██╔╝██║╚════██║
-███████║██║  ██║██║  ██║██║ ╚═╝ ██║███████║
-╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝
-```
+<img src="https://img.shields.io/badge/status-active-brightgreen?style=flat-square" />
+<img src="https://img.shields.io/badge/java-17-ED8B00?style=flat-square&logo=openjdk&logoColor=white" />
+<img src="https://img.shields.io/badge/spring_boot-3.2-6DB33F?style=flat-square&logo=springboot&logoColor=white" />
+<img src="https://img.shields.io/badge/react-19-61DAFB?style=flat-square&logo=react&logoColor=black" />
+<img src="https://img.shields.io/badge/mongodb-atlas-47A248?style=flat-square&logo=mongodb&logoColor=white" />
+<img src="https://img.shields.io/badge/tailwind_css-3-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
+<img src="https://img.shields.io/badge/JWT-stateless_auth-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" />
+<img src="https://img.shields.io/badge/selenium-E2E_tests-43B02A?style=flat-square&logo=selenium&logoColor=white" />
 
-### **Student Academic Records Management System**
+<br/><br/>
 
-*A production-grade university ERP — engineered end-to-end through the full Waterfall SDLC,*
-*from formal SRS and UML artifacts to implementation and E2E test coverage.*
+# SARMS
 
-<br/>
+### Student Academic Records Management System
 
-[![Status](https://img.shields.io/badge/status-active-brightgreen?style=flat-square)](.)
-[![Java](https://img.shields.io/badge/java-17-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](.)
-[![Spring Boot](https://img.shields.io/badge/spring_boot-3.2-6DB33F?style=flat-square&logo=springboot&logoColor=white)](.)
-[![React](https://img.shields.io/badge/react-19-61DAFB?style=flat-square&logo=react&logoColor=black)](.)
-[![MongoDB](https://img.shields.io/badge/mongodb-atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)](.)
-[![Tailwind CSS](https://img.shields.io/badge/tailwind_css-3-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](.)
-[![JWT](https://img.shields.io/badge/JWT-stateless_auth-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)](.)
-[![Selenium](https://img.shields.io/badge/selenium-E2E_tests-43B02A?style=flat-square&logo=selenium&logoColor=white)](.)
+*A university ERP built with React and Spring Boot, developed through a complete SDLC following the Waterfall Model —
+from SRS and UML design artifacts through to implementation and E2E testing.*
 
 </div>
 
 ---
 
-## Overview
-
-SARMS is not a tutorial-grade CRUD app. It's a full-stack university ERP that simulates real institutional workflows — automated semester promotion, graduation detection, credit-capped registration, and configurable academic terms — all secured behind stateless JWT authentication and role-isolated portals.
-
-Built by a four-person team following the **Waterfall Model**, with formal SRS documentation, DFD models, UML class and sequence diagrams produced before a single line of code was written.
-
----
-
 ## Table of Contents
 
+- [Overview](#overview)
 - [Key Features](#key-features)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
@@ -53,6 +39,14 @@ Built by a four-person team following the **Waterfall Model**, with formal SRS d
 
 ---
 
+## Overview
+
+SARMS is a university ERP that simulates real institutional workflows — automated semester promotion, graduation detection, credit-capped registration, and configurable academic terms — all secured behind stateless JWT authentication and role-isolated portals for Admins, Faculty, and Students.
+
+Built by a four-person team following the **Waterfall Model**, with formal SRS documentation, DFD models, and UML class and sequence diagrams produced before a single line of code was written.
+
+---
+
 ## Key Features
 
 | Feature | Description |
@@ -60,12 +54,12 @@ Built by a four-person team following the **Waterfall Model**, with formal SRS d
 | **Three Role-Based Portals** | Isolated dashboards for Admin, Faculty, and Student — each with discrete permissions and UI. |
 | **Stateless JWT Authentication** | HMAC-SHA256 signed tokens with role-based endpoint guarding via Spring Security. |
 | **One-Click Result Engine** | Bulk grade finalization, SGPA/CGPA recomputation, and semester promotion in a single atomic operation. |
-| **Auto-Enrollment Pipeline** | Students are automatically enrolled in next-semester core courses upon result publication. |
+| **Auto-Enrollment Pipeline** | Students automatically enrolled in next-semester core courses upon result publication. |
 | **Graduation Detection** | Students completing semester 8 are automatically marked as graduated and deactivated. |
-| **Double Authentication** | Destructive admin operations require real-time credential re-verification — not just a dialog box. |
+| **Double Authentication** | Destructive admin operations require real-time credential re-verification server-side — not a dialog box. |
 | **Configurable Academic Clock** | Admin-controlled Monsoon/Spring term system governing course visibility and registration windows. |
 | **Credit-Capped Registration** | Hard 25-credit ceiling with live tracking of core vs. elective allocation. |
-| **Flexible Grading Engine** | Supports weighted components, "Best N of M" quiz policies, and automatic percentage-to-grade mapping. |
+| **Flexible Grading Engine** | Weighted components, "Best N of M" quiz policies, and automatic percentage-to-grade mapping. |
 | **Self-Service Password Reset** | Two-step forgot-password flow with ID verification and BCrypt re-hashing. |
 
 ---
@@ -87,18 +81,18 @@ Built by a four-person team following the **Waterfall Model**, with formal SRS d
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                     React SPA (Vite)                    │
-│         Admin Portal │ Faculty Portal │ Student Portal  │
+│              React SPA  (Vite + React Router)           │
+│     Admin Portal  ·  Faculty Portal  ·  Student Portal  │
 └──────────────────────────┬──────────────────────────────┘
-                           │ REST (Axios + JWT Bearer)
+                           │  REST  (Axios + JWT Bearer)
 ┌──────────────────────────▼──────────────────────────────┐
 │                  Spring Boot Backend                    │
 │                                                         │
-│  JwtAuthFilter → Controller → Service → Repository      │
+│   JwtAuthFilter → Controller → Service → Repository     │
 │                                    │                    │
-│                          Spring Security Context        │
+│                         Spring Security Context         │
 └──────────────────────────┬──────────────────────────────┘
-                           │ Spring Data MongoDB
+                           │  Spring Data MongoDB
 ┌──────────────────────────▼──────────────────────────────┐
 │                     MongoDB Atlas                       │
 │   users · courses · enrollments · marks · semesters     │
@@ -111,28 +105,26 @@ Every request passes through a custom `JwtAuthFilter` that validates the token a
 
 ## Engineering Decisions
 
-These design choices reflect real-world institutional complexity — not textbook patterns.
-
 **Double Authentication for Critical Operations**
-Publishing results and wiping student data require the admin to re-enter credentials at the point of action, verified server-side against the BCrypt hash. No frontend confirmation dialog alone.
+Publishing results and wiping student data require the admin to re-enter credentials at the point of action, verified server-side against the BCrypt hash — not just a frontend confirmation dialog.
 
 **Automated Semester Lifecycle Engine**
-A single "Upload Results" action atomically: finalizes grades for all enrolled students → recomputes SGPA → promotes to next semester → auto-enrolls in department-specific core courses → shifts the global academic term. One transactional flow.
+A single "Upload Results" action atomically finalizes grades for all enrolled students → recomputes SGPA → promotes to next semester → auto-enrolls in department-specific core courses → shifts the global academic term. One transactional flow.
 
 **Automatic Graduation Detection**
 Students completing semester 8 are programmatically marked inactive. Accounts remain accessible for transcript viewing but are locked out of registration and course workflows.
 
-**Configurable Monsoon/Spring Academic Clock**
-The admin shifts the university's active term between Monsoon (odd semesters) and Spring (even semesters). This controls course catalog visibility, determines which student batches can register, and enforces semester-type parity rules.
+**Configurable Monsoon / Spring Academic Clock**
+The admin shifts the university's active term between Monsoon (odd semesters) and Spring (even semesters). Controls course catalog visibility, student batch eligibility, and enforces semester-type parity rules.
 
 **Credit-Capped Registration with Core Locking**
 Core departmental courses are pre-enrolled and locked. Students modify only elective selections within a hard 25-credit ceiling, with real-time visual feedback on remaining capacity.
 
 **"Best N of M" Grading Policy**
-Faculty can define policies like "Best 3 of 5 quizzes" — the engine automatically selects top scores and scales them during grade computation.
+Faculty define policies like "Best 3 of 5 quizzes" — the engine automatically selects top scores and scales them during grade computation.
 
 **Idempotent Database Seeding**
-`DataSeeder` checks for existing data before inserting, making it safe to restart the server repeatedly without duplication. It also force-syncs all user passwords on every boot to ensure cross-JDK BCrypt compatibility.
+`DataSeeder` checks for existing data before inserting, making it safe to restart the server any number of times without duplication. It also force-syncs all user passwords on every boot to ensure cross-JDK BCrypt compatibility.
 
 **Full System Reset with Selective Preservation**
 The admin "Wipe" action (requiring typed confirmation) deletes all student accounts, enrollments, and marks while preserving the course catalog, faculty records, and grading configurations — designed for clean end-of-year resets.
@@ -161,37 +153,34 @@ Produced during the formal SDLC phases before implementation began:
 This project followed the **Waterfall Model** through a complete SDLC:
 
 ```
-Requirement Analysis → System Design → Implementation → Testing
-        │                    │               │              │
-      SRS +               DFD / UML       React +        Selenium
-   stakeholder           artifacts      Spring Boot     WebDriver +
-   interviews                                           Playwright
+Requirement Analysis  →  System Design  →  Implementation  →  Testing
+        │                     │                  │                │
+   SRS · Stakeholder      DFD · UML           React +        Selenium
+     interviews            artifacts         Spring Boot    WebDriver +
+                                                            Playwright
 ```
 
-Each phase produced formal deliverables. The sequential approach locked design decisions before code was written, yielding a stable, well-documented system with traceable requirements.
+The sequential approach locked design decisions before code was written, resulting in a stable, well-documented system with traceable requirements from SRS through to test coverage.
 
 ---
 
 ## Getting Started
 
-<details>
-<summary><strong>Prerequisites</strong></summary>
+### Prerequisites
 
 - Java 17
 - Node.js 18+
 - Maven 3.9+
 - A MongoDB Atlas cluster (free tier works)
 
-</details>
-
-### 1. Clone
+### 1 — Clone
 
 ```bash
 git clone https://github.com/AryanRastogi7/SARMS.git
 cd SARMS
 ```
 
-### 2. Configure Environment
+### 2 — Configure environment
 
 ```bash
 cd backend
@@ -205,10 +194,10 @@ MONGO_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/sarms_db?retryWr
 JWT_SECRET=<a-long-random-string-for-HMAC-SHA256>
 ```
 
-### 3. Start the Backend
+### 3 — Start the backend
 
 <details>
-<summary><strong>Windows (PowerShell)</strong></summary>
+<summary>Windows (PowerShell)</summary>
 
 ```powershell
 cd backend
@@ -220,7 +209,7 @@ apache-maven-3.9.6\bin\mvn clean compile spring-boot:run
 </details>
 
 <details>
-<summary><strong>macOS / Linux</strong></summary>
+<summary>macOS / Linux</summary>
 
 ```bash
 cd backend
@@ -233,9 +222,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 Wait for `Started SarmsApplication in X seconds`. API is live at `http://localhost:8080`.
 
-Swagger UI available at: `http://localhost:8080/swagger-ui.html`
-
-### 4. Start the Frontend
+### 4 — Start the frontend
 
 ```bash
 cd frontend
