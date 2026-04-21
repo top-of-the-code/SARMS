@@ -176,7 +176,7 @@ The sequential approach locked design decisions before code was written, resulti
 ### 1 — Clone
 
 ```bash
-git clone https://github.com/AryanRastogi7/SARMS.git
+git clone https://github.com/top-of-the-code/SARMS.git
 cd SARMS
 ```
 
