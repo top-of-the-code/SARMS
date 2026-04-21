@@ -195,9 +195,9 @@ The app is live at `http://localhost:5173`.
 <table>
   <tr>
     <td align="center"><a href="https://github.com/AryanRastogi72"><strong>Aryan Rastogi</strong></a></td>
-    <td align="center"><a href="https://github.com"><strong>Chhayank Gupta</strong></td>
+    <td align="center"><a href="https://github.com/Chhayank19"><strong>Chhayank Gupta</strong></td>
     <td align="center"><a href="https://github.com"><strong>Ridhima Garg</strong></td>
-    <td align="center"><a href="https://github.com"><strong>Muskan Saxena</strong></td>
+    <td align="center"><a href="https://github.com/top-of-the-code"><strong>Muskan Saxena</strong></td>
   </tr>
 </table>
 
